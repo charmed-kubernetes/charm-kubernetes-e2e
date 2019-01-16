@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from charms import layer
 from charms.layer import snap
 
 from charms.reactive import hook
@@ -26,6 +25,7 @@ from charms.reactive.helpers import data_changed
 
 from charmhelpers.core import hookenv, unitdata
 
+from pathlib import Path
 from shlex import split
 
 from subprocess import check_call
@@ -33,6 +33,8 @@ from subprocess import check_output
 
 db = unitdata.kv()
 USER = 'system:e2e'
+certs_dir = Path('/srv/kubernetes')
+ca_crt_path = certs_dir / 'ca.crt'
 
 
 @hook('upgrade-charm')
@@ -89,16 +91,11 @@ def install_snaps():
     set_state('kubernetes-e2e.installed')
 
 
-@when('tls_client.ca.saved', 'tls_client.client.certificate.saved',
-      'tls_client.client.key.saved', 'kubernetes-master.available',
+@when('tls_client.ca.saved', 'kubernetes-master.available',
       'kubernetes-e2e.installed', 'e2e.auth.bootstrapped')
 @when_not('kubeconfig.ready')
 def prepare_kubeconfig_certificates(master):
     ''' Prepare the data to feed to create the kubeconfig file. '''
-
-    layer_options = layer.options('tls-client')
-    # Get all the paths to the tls information required for kubeconfig.
-    ca = layer_options.get('ca_certificate_path')
     creds = db.get('credentials')
     data_changed('kube-control.creds', creds)
 
@@ -108,9 +105,9 @@ def prepare_kubeconfig_certificates(master):
     kubeconfig_path = '/home/ubuntu/.kube/config'
 
     # Create kubernetes configuration in the default location for ubuntu.
-    create_kubeconfig('/root/.kube/config', servers[0], ca,
+    create_kubeconfig('/root/.kube/config', servers[0], str(ca_crt_path),
                       token=creds['client_token'], user='root')
-    create_kubeconfig(kubeconfig_path, servers[0], ca,
+    create_kubeconfig(kubeconfig_path, servers[0], str(ca_crt_path),
                       token=creds['client_token'], user='ubuntu')
     # Set permissions on the ubuntu users kubeconfig to ensure a consistent UX
     cmd = ['chown', 'ubuntu:ubuntu', kubeconfig_path]

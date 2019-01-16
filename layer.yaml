@@ -8,5 +8,3 @@ includes:
 options:
   tls-client:
     ca_certificate_path: '/srv/kubernetes/ca.crt'
-    client_certificate_path: '/srv/kubernetes/client.crt'
-    client_key_path: '/srv/kubernetes/client.key'
