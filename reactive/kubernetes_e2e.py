@@ -84,6 +84,8 @@ def install_snaps():
     ''' Deliver the e2e and kubectl components from the binary resource stream
     packages declared in the charm '''
     channel = hookenv.config('channel')
+    hookenv.status_set('maintenance', 'Installing core snap')
+    snap.install('core')
     hookenv.status_set('maintenance', 'Installing kubectl snap')
     snap.install('kubectl', channel=channel, classic=True)
     hookenv.status_set('maintenance', 'Installing kubernetes-test snap')
