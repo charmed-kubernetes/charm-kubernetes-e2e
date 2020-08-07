@@ -14,7 +14,7 @@ tags:
   - validation
   - conformance
 series:
-    - focal
+  - focal
   - bionic
   - xenial
 requires:
