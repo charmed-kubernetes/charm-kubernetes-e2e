@@ -14,9 +14,9 @@ tags:
   - validation
   - conformance
 series:
+    - focal
   - bionic
   - xenial
-  - focal
 requires:
   kubernetes-master:
     interface: http
