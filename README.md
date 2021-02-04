@@ -128,6 +128,11 @@ firewall to successfully run e2e test results. Or you may use the exposed
 proxy settings [properly configured](https://github.com/juju-solutions/bundle-canonical-kubernetes#proxy-configuration)
 on the kubernetes-worker units.
 
+## Contributing
+
+If you are interested in fixing issues, updating docs or helping with
+development of this charm, please see the [CONTIBUTING.md](./CONTRIBUTING.md) page.
+
 ## Help resources:
 
 - [Bug Tracker](https://github.com/juju-solutions/bundle-canonical-kubernetes/issues)
