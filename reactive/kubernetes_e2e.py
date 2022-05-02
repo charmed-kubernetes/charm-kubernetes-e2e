@@ -18,7 +18,6 @@ from charms.layer import snap
 
 from charms.reactive import hook
 from charms.reactive import is_state
-from charms.reactive import get_flags, set_flag, clear_flag
 from charms.reactive import set_state
 from charms.reactive import when
 from charms.reactive import when_not
@@ -33,6 +32,8 @@ from subprocess import check_call
 from subprocess import check_output
 
 db = unitdata.kv()
+HTTP_RELATION = "kubernetes-master"  # wokeignore:rule=master
+APP = hookenv.application_name()
 USER = "system:e2e"
 certs_dir = Path("/srv/kubernetes")
 ca_crt_path = certs_dir / "ca.crt"
@@ -42,14 +43,6 @@ ca_crt_path = certs_dir / "ca.crt"
 def reset_delivery_states():
     """Remove the state set when resources are unpacked."""
     install_snaps()
-
-    # migrate to inclusive flags
-    old, new = "kubernetes-master", "kubernetes-control-plane"  # wokeignore:rule=master
-    for flag in get_flags():
-        if flag.startswith(old):
-            new_flag = flag.replace(old, new, 1)
-            clear_flag(flag)
-            set_flag(new_flag)
 
 
 @when("kubernetes-e2e.installed")
@@ -63,12 +56,12 @@ def messaging():
     end user"""
 
     missing_services = []
-    if not is_state("kubernetes-control-plane.available"):
-        missing_services.append("kubernetes-control-plane:http")
+    if not is_state(f"{HTTP_RELATION}.available"):
+        missing_services.append(f"{APP}:{HTTP_RELATION}")
     if not is_state("certificates.available"):
-        missing_services.append("certificates")
+        missing_services.append(f"{APP}:certificates")
     if not is_state("kubeconfig.ready"):
-        missing_services.append("kubernetes-control-plane:kube-control")
+        missing_services.append(f"{APP}:kube-control")
 
     if missing_services:
         if len(missing_services) > 1:
@@ -104,7 +97,7 @@ def install_snaps():
 
 @when(
     "tls_client.ca.saved",
-    "kubernetes-control-plane.available",
+    f"{HTTP_RELATION}.available",
     "kubernetes-e2e.installed",
     "e2e.auth.bootstrapped",
 )
