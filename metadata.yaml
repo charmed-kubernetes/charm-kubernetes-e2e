@@ -1,5 +1,6 @@
 name: kubernetes-e2e
 summary: Run end-2-end validation of a clusters conformance
+docs: https://discourse.charmhub.io/t/kubernetes-e2e-docs-index/6323
 maintainers:
     - Tim Van Steenburgh <tim.van.steenburgh@canonical.com>
     - George Kraft <george.kraft@canonical.com>
