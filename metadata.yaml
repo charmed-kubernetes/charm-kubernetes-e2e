@@ -18,7 +18,7 @@ series:
   - bionic
   - xenial
 requires:
-  kubernetes-master:
+  kubernetes-control-plane:
     interface: http
   kube-control:
     interface: kube-control

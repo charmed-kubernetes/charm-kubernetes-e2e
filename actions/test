@@ -12,7 +12,7 @@ PARALLELISM=$(action-get parallelism)
 if [ ! -f /home/ubuntu/.kube/config ]
 then
   action-fail "Missing Kubernetes configuration."
-  action-set suggestion="Relate to the certificate authority, and kubernetes-master"
+  action-set suggestion="Relate to the certificate authority, and kubernetes-control-plane"
   exit 0
 fi
 

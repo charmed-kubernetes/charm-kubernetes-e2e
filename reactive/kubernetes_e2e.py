@@ -18,6 +18,7 @@ from charms.layer import snap
 
 from charms.reactive import hook
 from charms.reactive import is_state
+from charms.reactive import get_flags, set_flag, clear_flag
 from charms.reactive import set_state
 from charms.reactive import when
 from charms.reactive import when_not
@@ -42,6 +43,14 @@ def reset_delivery_states():
     """Remove the state set when resources are unpacked."""
     install_snaps()
 
+    # migrate to inclusive flags
+    old, new = "kubernetes-master", "kubernetes-control-plane"  # wokeignore:rule=master
+    for flag in get_flags():
+        if flag.startswith(old):
+            new_flag = flag.replace(old, new, 1)
+            clear_flag(flag)
+            set_flag(new_flag)
+
 
 @when("kubernetes-e2e.installed")
 def report_status():
@@ -54,12 +63,12 @@ def messaging():
     end user"""
 
     missing_services = []
-    if not is_state("kubernetes-master.available"):
-        missing_services.append("kubernetes-master:http")
+    if not is_state("kubernetes-control-plane.available"):
+        missing_services.append("kubernetes-control-plane:http")
     if not is_state("certificates.available"):
         missing_services.append("certificates")
     if not is_state("kubeconfig.ready"):
-        missing_services.append("kubernetes-master:kube-control")
+        missing_services.append("kubernetes-control-plane:kube-control")
 
     if missing_services:
         if len(missing_services) > 1:
@@ -95,17 +104,17 @@ def install_snaps():
 
 @when(
     "tls_client.ca.saved",
-    "kubernetes-master.available",
+    "kubernetes-control-plane.available",
     "kubernetes-e2e.installed",
     "e2e.auth.bootstrapped",
 )
 @when_not("kubeconfig.ready")
-def prepare_kubeconfig_certificates(master):
+def prepare_kubeconfig_certificates(control_plane):
     """Prepare the data to feed to create the kubeconfig file."""
     creds = db.get("credentials")
     data_changed("kube-control.creds", creds)
 
-    servers = get_kube_api_servers(master)
+    servers = get_kube_api_servers(control_plane)
 
     # pedantry
     kubeconfig_path = "/home/ubuntu/.kube/config"
@@ -142,8 +151,8 @@ def catch_change_in_creds(kube_control):
     creds = kube_control.get_auth_credentials(USER)
     if creds and data_changed("kube-control.creds", creds) and creds["user"] == USER:
         # We need to cache the credentials here because if the
-        # master changes (master leader dies and replaced by a new one)
-        # the new master will have no recollection of our certs.
+        # control-plane changes (a leader dies and replaced by a new one)
+        # the new control-plane will have no recollection of our certs.
         db.set("credentials", creds)
         set_state("e2e.auth.bootstrapped")
 
@@ -188,7 +197,7 @@ def create_kubeconfig(
     # see: kubectl config set-credentials --help
     if token and password:
         raise ValueError("Token and Password are mutually exclusive.")
-    # Create the config file with the address of the master server.
+    # Create the config file with the address of the control-plane server.
     cmd = (
         "kubectl config --kubeconfig={0} set-cluster {1} "
         "--server={2} --certificate-authority={3} --embed-certs=true"
@@ -218,12 +227,12 @@ def create_kubeconfig(
     check_call(split(cmd.format(kubeconfig, context)))
 
 
-def get_kube_api_servers(master):
+def get_kube_api_servers(control_plane):
     """Return the kubernetes api server address and port for this
     relationship."""
     hosts = []
     # Iterate over every service from the relation object.
-    for service in master.services():
+    for service in control_plane.services():
         for unit in service["hosts"]:
             hosts.append("https://{0}:{1}".format(unit["hostname"], unit["port"]))
     return hosts
