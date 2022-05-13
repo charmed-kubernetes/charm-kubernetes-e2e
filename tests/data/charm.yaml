@@ -2,7 +2,8 @@ description: Overlay for attaching current charm
 applications:
   kubernetes-e2e:
     charm: {{charm}}
-    channel: null
+    constraints: "cores=2 mem=8G root-disk=16G"
+    num_units: 1
 relations:
 - - kubernetes-e2e:kube-control
   - kubernetes-control-plane:kube-control
