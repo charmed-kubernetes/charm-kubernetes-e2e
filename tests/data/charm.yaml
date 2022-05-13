@@ -1,0 +1,12 @@
+description: Overlay for attaching current charm
+applications:
+  kubernetes-e2e:
+    charm: {{charm}}
+    channel: null
+relations:
+- - kubernetes-e2e:kube-control
+  - kubernetes-control-plane:kube-control
+- - kubernetes-e2e:kubernetes-master
+  - kubernetes-control-plane:kube-api-endpoint
+- - kubernetes-e2e
+  - easyrsa
