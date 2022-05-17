@@ -30,6 +30,7 @@ ACTION_JUNIT_TGZ=$ACTION_JUNIT.tar.gz
 echo "JUJU_E2E_START=$(date -u +%s)" | tee $ACTION_LOG
 # Append if using extra args
 echo "Using extra args = $EXTRA_ARGS" | tee -a $ACTION_LOG
+echo "Skip test matching: $SKIP" | tee -a $SKIP
 echo "JUJU_E2E_VERSION=$(kubectl version | grep Server | cut -d " " -f 5 | cut -d ":" -f 2 | sed s/\"// | sed s/\",//)" | tee -a $ACTION_LOG
 GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
   -kubeconfig /home/ubuntu/.kube/config \

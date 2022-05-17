@@ -19,6 +19,8 @@ READY_MESSAGE = "Ready to test."
 TEST_ACTION_NAME = "test"
 # Allow e2e tests to run with up to 2 non-ready nodes 
 EXTRA_ARGS = "-allowed-not-ready-nodes 2"
+# Run reduced test suite
+SKIP_TESTS = r"\[(Flaky|Slow|Feature:.*)\]"
 
 
 @pytest.mark.abort_on_fail
@@ -64,7 +66,7 @@ async def test_action_test(ops_test: OpsTest):
     log.info("Queue action run...")
     # Get application unit
     unit = ops_test.model.applications[APP_NAME].units[0]
-    action = await unit.run_action(TEST_ACTION_NAME, extra=EXTRA_ARGS)
+    action = await unit.run_action(TEST_ACTION_NAME, extra=EXTRA_ARGS, skip=SKIP_TESTS)
 
     log.info("Wait for action...")
     await action.wait()
@@ -73,4 +75,6 @@ async def test_action_test(ops_test: OpsTest):
     # Get action status from queued action id
     result = await ops_test.model.get_action_status(uuid_or_prefix=action.entity_id)
     # Assert the completion and generation of report
-    assert result.get(action.entity_id, "") in ["completed", "failed"]
+    status = result.get(action.entity_id, "")
+    log.info(f"Action finished with status {status}")
+    assert  status in ["completed", "failed"]
