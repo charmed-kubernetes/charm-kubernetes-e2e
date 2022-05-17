@@ -54,7 +54,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         lambda: "kubernetes-e2e" in ops_test.model.applications, timeout=60
     )
 
-    await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=60 * 60)
+    await ops_test.model.wait_for_idle(status="active", timeout=60 * 60)
 
     unit = ops_test.model.applications[APP_NAME].units[0]
     # Check unit status message
