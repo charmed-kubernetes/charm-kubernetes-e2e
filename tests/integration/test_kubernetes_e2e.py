@@ -17,6 +17,8 @@ METADATA = yaml.safe_load(Path("./metadata.yaml").read_text())
 APP_NAME = METADATA["name"]
 READY_MESSAGE = "Ready to test."
 TEST_ACTION_NAME = "test"
+# Allow e2e tests to run with up to 2 non-ready nodes 
+EXTRA_ARGS = "-allowed-not-ready-nodes 2"
 
 
 @pytest.mark.abort_on_fail
@@ -52,14 +54,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
         lambda: "kubernetes-e2e" in ops_test.model.applications, timeout=60
     )
 
-    try:
-        await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=60 * 60)
-    except asyncio.TimeoutError:
-        if "kubernetes-e2e" not in ops_test.model.applications:
-            raise
-        app = ops_test.model.applications["kubernetes-e2e"]
-        if not app.units:
-            raise
+    await ops_test.model.wait_for_idle(apps=[APP_NAME], status="active", timeout=60 * 60)
 
     unit = ops_test.model.applications[APP_NAME].units[0]
     # Check unit status message
@@ -69,7 +64,7 @@ async def test_action_test(ops_test: OpsTest):
     log.info("Queue action run...")
     # Get application unit
     unit = ops_test.model.applications[APP_NAME].units[0]
-    action = await unit.run_action(TEST_ACTION_NAME)
+    action = await unit.run_action(TEST_ACTION_NAME, extra=EXTRA_ARGS)
 
     log.info("Wait for action...")
     await action.wait()
@@ -77,8 +72,5 @@ async def test_action_test(ops_test: OpsTest):
     log.info("Action finished...")
     # Get action status from queued action id
     result = await ops_test.model.get_action_status(uuid_or_prefix=action.entity_id)
-    assert result.get(action.entity_id, "") == "completed"
-
-
-
-
+    # Assert the completion and generation of report
+    assert result.get(action.entity_id, "") in ["completed", "failed"]
