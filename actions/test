@@ -8,6 +8,7 @@ export PATH="$PATH:/snap/bin"
 FOCUS=$(action-get focus)
 SKIP=$(action-get skip)
 PARALLELISM=$(action-get parallelism)
+EXTRA_ARGS=$(action-get extra)
 
 if [ ! -f /home/ubuntu/.kube/config ]
 then
@@ -27,12 +28,16 @@ ACTION_JUNIT_TGZ=$ACTION_JUNIT.tar.gz
 
 # This initializes an e2e build log with the START TIMESTAMP.
 echo "JUJU_E2E_START=$(date -u +%s)" | tee $ACTION_LOG
+# Append if using extra args
+echo "Using extra args = $EXTRA_ARGS" | tee -a $ACTION_LOG
+echo "Skip tests matching: $SKIP" | tee -a $ACTION_LOG
 echo "JUJU_E2E_VERSION=$(kubectl version | grep Server | cut -d " " -f 5 | cut -d ":" -f 2 | sed s/\"// | sed s/\",//)" | tee -a $ACTION_LOG
 GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
   -kubeconfig /home/ubuntu/.kube/config \
   -host $SERVER \
   -ginkgo.focus $FOCUS \
   -ginkgo.skip "$SKIP" \
+  $EXTRA_ARGS \
   -report-dir $ACTION_JUNIT 2>&1 | tee -a $ACTION_LOG
 
 # This appends the END TIMESTAMP to the e2e build log
