@@ -17,3 +17,7 @@ test:
       default: 30000
       description: Timeout in nanoseconds
       type: integer
+    extra:
+      default: ""
+      description: Extra arguments for kubernetes-e2e test suite
+      type: string
