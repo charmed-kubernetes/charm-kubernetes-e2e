@@ -20,7 +20,7 @@ TEST_ACTION_NAME = "test"
 # Allow e2e tests to run with up to 2 non-ready nodes 
 EXTRA_ARGS = "-allowed-not-ready-nodes 2"
 # Run reduced test suite
-SKIP_TESTS = r"\[(Flaky|Slow|Feature:.*)\]"
+SKIP_TESTS = r"\[(Flaky|Slow|Conformance|Feature:.*)\]"
 
 
 @pytest.mark.abort_on_fail
