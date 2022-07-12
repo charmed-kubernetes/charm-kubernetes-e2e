@@ -15,8 +15,8 @@ tags:
   - validation
   - conformance
 series:
-  - jammy
   - focal
+  - jammy
   - bionic
   - xenial
 requires:
