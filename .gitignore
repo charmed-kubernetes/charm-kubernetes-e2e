@@ -6,3 +6,4 @@ placeholders/
 *.charm
 interfaces
 layers
+*.coverage
