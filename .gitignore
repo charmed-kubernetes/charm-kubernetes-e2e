@@ -1,0 +1,9 @@
+.tox/
+__pycache__/
+*.pyc
+.python-version
+placeholders/
+*.charm
+interfaces
+layers
+*.coverage

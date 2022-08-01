@@ -16,8 +16,8 @@ tags:
   - conformance
 series:
   - focal
+  - jammy
   - bionic
-  - xenial
 requires:
   kubernetes-master:
     interface: http
