@@ -15,9 +15,8 @@ tags:
   - validation
   - conformance
 series:
-  - focal
   - jammy
-  - bionic
+  - focal
 requires:
   kubernetes-master:
     interface: http
