@@ -69,12 +69,17 @@ async def test_action_test(ops_test: OpsTest):
     action = await unit.run_action(TEST_ACTION_NAME, extra=EXTRA_ARGS, skip=SKIP_TESTS)
 
     log.info("Wait for action...")
-    await action.wait()
+    action = await action.wait()
 
     log.info("Action finished...")
     # Get action status from queued action id
-    result = await ops_test.model.get_action_status(uuid_or_prefix=action.entity_id)
+    result = action.results
     # Assert the completion and generation of report
-    status = result.get(action.entity_id, "")
-    log.info(f"Action finished with status {status}")
-    assert  status in ["completed", "failed"]
+    status = action.status
+    log.info(
+        "Action finished with status \n"
+        f"rc={result['return-code']}\n"
+        f"stdout={result['stdout']}\n"
+        f"stderr={result['stderr']}\n"
+    )
+    assert status in ["completed", "failed"]
