@@ -14,7 +14,7 @@ https://juju.is/docs/sdk/create-a-minimal-kubernetes-charm
 
 import logging
 import subprocess
-from charms.operator_libs_linux.v2 import snap
+from charms.operator_libs_linux.v2.snap import SnapCache, SnapState
 
 import ops
 from ops import ActiveStatus
@@ -24,12 +24,14 @@ logger = logging.getLogger(__name__)
 
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 
+
 def determine_arch():
     """dpkg wrapper to surface the architecture we are tied to"""
     cmd = ["dpkg", "--print-architecture"]
     output = subprocess.check_output(cmd).decode("utf-8")
 
     return output.rstrip()
+
 
 class OpsCharmKubernetesE2ECharm(ops.CharmBase):
     """Charm the service."""
@@ -40,25 +42,37 @@ class OpsCharmKubernetesE2ECharm(ops.CharmBase):
         self.framework.observe(self.on.config_changed, self._on_config_changed)
         self.framework.observe(self.on.test_action, self._on_test_action)
 
+        self.snap_cache = SnapCache()
+
     def _on_config_changed(self, event):
         channel = self.config.get("channel")
-        if self.unit.state["channel"] != channel:
-            self._install_snaps(channel)
-
+        self._install_snaps(channel)
 
     def _install_snaps(self, channel: str):
-        if not isinstance(channel, str) or channel == "":
-            raise ValueError("Channel must be a non-empty string.")
-
-        self.unit.status = ops.MaintenanceStatus(f"Installing core snap from channel {channel}")
-        snap.add("core")
+        self.unit.status = ops.MaintenanceStatus(f"Installing core snap")
+        self._ensure_snap("core")
 
         self.unit.status = ops.MaintenanceStatus(f"Installing kubectl snap from channel {channel}")
-        snap.add("kubectl", channel=channel, classic=True)
+        self._ensure_snap("kubectl", channel=channel)
 
-        self.unit.status = ops.MaintenanceStatus(f"Installing kubernetes-test from channel {channel}")
-        snap.add("kubernetes-test", channel=channel, classic=True)
+        self.unit.status = ops.MaintenanceStatus(
+            f"Installing kubernetes-test from channel {channel}"
+        )
+        self._ensure_snap("kubernetes-test", channel=channel, classic=True)
 
+    def _ensure_snap(
+        self,
+        name: str,
+        state: SnapState = SnapState.Latest,
+        channel: str | None = "",
+        classic: bool | None = False,
+    ):
+        if not isinstance(name, str) or name == "":
+            raise ValueError("A name is required to ensure a snap.")
+
+        snap = self.snap_cache[name]
+        if not snap.present:
+            snap.ensure(state=state, classic=classic, channel=channel)
 
     def _on_start(self, event):
         self.unit.status = ops.ActiveStatus()
@@ -76,6 +90,7 @@ class OpsCharmKubernetesE2ECharm(ops.CharmBase):
             subprocess.run(command, check=True)
         except subprocess.CalledProcessError as e:
             logger.error(f"An error occurred: {e}.")
+
 
 if __name__ == "__main__":  # pragma: nocover
     ops.main(OpsCharmKubernetesE2ECharm)  # type: ignore
