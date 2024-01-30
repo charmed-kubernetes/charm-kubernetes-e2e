@@ -2,7 +2,6 @@
 # Copyright 2024 user
 # See LICENSE file for licensing details.
 
-import asyncio
 import logging
 from pathlib import Path
 
@@ -15,31 +14,26 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./charmcraft.yaml").read_text())
 APP_NAME = METADATA["name"]
 TEST_ACTION_NAME = "test"
-# Allow e2e tests to run with up to 2 non-ready nodes 
+# Allow e2e tests to run with up to 2 non-ready nodes
 EXTRA_ARGS = "-allowed-not-ready-nodes 2"
 # Run reduced test suite
 SKIP_TESTS = r"\[(Flaky|Slow|Conformance|Feature:.*)\]"
+
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
     # Build and deploy charm from local source folder
     charm = await ops_test.build_charm(".")
 
-    await ops_test.model.deploy(charm,
-                            application_name=APP_NAME,
-                            series='focal')
+    await ops_test.model.deploy(charm, application_name=APP_NAME, series="focal")
 
     # Deploy the charm and wait for active/idle status
     async with ops_test.fast_forward():
         await ops_test.model.wait_for_idle(
-            apps=[APP_NAME],
-            status="active",
-            raise_on_blocked=True,
-            timeout=1000,
-            idle_period=1
+            apps=[APP_NAME], status="active", raise_on_blocked=True, timeout=1000, idle_period=1
         )
-        assert ops_test.model.applications[APP_NAME].units[
-                   0].workload_status == "active"
+        assert ops_test.model.applications[APP_NAME].units[0].workload_status == "active"
+
 
 async def test_action_test(ops_test: OpsTest):
     logger.info("Queue action run...")
