@@ -71,16 +71,7 @@ resources:
 # tab on Charmhub.
 # See https://juju.is/docs/config for guidance.
 
-config:
-  options:
-    # An example config option to customise the log level of the workload
-    log-level:
-      description: |
-        Configures the log level of gunicorn. 
 
-        Acceptable values are: "info", "debug", "warning", "error" and "critical"
-      default: "info"
-      type: string
 
 parts:
   charm:
