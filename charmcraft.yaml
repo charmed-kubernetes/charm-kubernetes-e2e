@@ -75,4 +75,4 @@ resources:
 
 parts:
   charm:
-    prime: ["scripts/test.sh"]
+    prime: ["scripts/**"]
