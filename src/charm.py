@@ -24,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 
+def determine_arch():
+    """dpkg wrapper to surface the architecture we are tied to"""
+    cmd = ["dpkg", "--print-architecture"]
+    output = subprocess.check_output(cmd).decode("utf-8")
+
+    return output.rstrip()
 
 class OpsCharmKubernetesE2ECharm(ops.CharmBase):
     """Charm the service."""
@@ -36,7 +42,8 @@ class OpsCharmKubernetesE2ECharm(ops.CharmBase):
 
     def _on_config_changed(self, event):
         channel = self.config.get("channel")
-        self._install_snaps(channel)
+        if self.unit.state["channel"] != channel:
+            self._install_snaps(channel)
 
 
     def _install_snaps(self, channel: str):
@@ -51,8 +58,6 @@ class OpsCharmKubernetesE2ECharm(ops.CharmBase):
 
         self.unit.status = ops.MaintenanceStatus(f"Installing kubernetes-test from channel {channel}")
         snap.add("kubernetes-test", channel=channel, classic=True)
-
-        #set_state("kubernetes-e2e.installed")
 
 
     def _on_start(self, event):
