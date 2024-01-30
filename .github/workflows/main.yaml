@@ -16,22 +16,22 @@ jobs:
       - call-inclusive-naming-check
 
   integration-test:
-    name: Integration test with VMWare
+    name: Integration test.sh with VMWare
     runs-on: self-hosted
     needs:
       - lint-unit
     timeout-minutes: 90
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: scripts/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: scripts/setup-python@v4
         with:
           python-version: '3.10'
 
       - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
+        uses: charmed-kubernetes/scripts-operator@main
         with:
           provider: vsphere
           juju-channel: "3.1/stable"
@@ -40,7 +40,7 @@ jobs:
           bootstrap-constraints: "arch=amd64 cores=2 mem=4G"
           bootstrap-options: "${{ secrets.JAMMY_BOOTSTRAP_OPTIONS }} --model-default datastore=vsanDatastore --model-default primary-network=VLAN_2763"
 
-      - name: Run test
+      - name: Run test.sh
         run: tox -e integration -- --basetemp=/home/ubuntu/pytest
 
       - name: Setup Debug Artifact Collection
@@ -56,7 +56,7 @@ jobs:
 
       - name: Upload debug artifacts
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: scripts/upload-artifact@v3
         with:
-          name: test-run-artifacts
+          name: test.sh-run-artifacts
           path: tmp

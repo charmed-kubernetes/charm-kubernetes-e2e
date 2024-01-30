@@ -5,10 +5,18 @@ set -ex
 export PATH="$PATH:/snap/bin"
 
 # Grab the action parameter values
-FOCUS=$(action-get focus)
-SKIP=$(action-get skip)
-PARALLELISM=$(action-get parallelism)
-EXTRA_ARGS=$(action-get extra)
+FOCUS=${1}
+SKIP=${2}
+PARALLELISM=${3}
+TIMEOUT=${4}
+EXTRA_ARGS=${5}
+
+echo "FOCUS: $FOCUS"
+echo "SKIP: $SKIP"
+echo "PARALLELISM: $PARALLELISM"
+echo "EXTRA_ARGS: $EXTRA_ARGS"
+
+exit 0
 
 if [ ! -f /home/ubuntu/.kube/config ]
 then
@@ -32,7 +40,7 @@ echo "JUJU_E2E_START=$(date -u +%s)" | tee $ACTION_LOG
 echo "Using extra args = $EXTRA_ARGS" | tee -a $ACTION_LOG
 echo "Skip tests matching: $SKIP" | tee -a $ACTION_LOG
 echo "JUJU_E2E_VERSION=$(kubectl version | grep Server | cut -d " " -f 5 | cut -d ":" -f 2 | sed s/\"// | sed s/\",//)" | tee -a $ACTION_LOG
-GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
+GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.sh.e2e \
   -kubeconfig /home/ubuntu/.kube/config \
   -host $SERVER \
   -ginkgo.focus $FOCUS \

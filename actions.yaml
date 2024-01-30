@@ -1,5 +1,5 @@
 test:
-  description: "Execute an end to end test."
+  description: "Execute an end to end test.sh."
   params:
     focus:
       default: "\\[Conformance\\]"
@@ -7,7 +7,7 @@ test:
       type: string
     parallelism:
       default: 25
-      description: The number of test nodes to run in parallel.
+      description: The number of test.sh nodes to run in parallel.
       type: integer
     skip:
       default: "\\[Flaky\\]|\\[Serial\\]"
@@ -19,5 +19,5 @@ test:
       type: integer
     extra:
       default: ""
-      description: Extra arguments for kubernetes-e2e test suite
+      description: Extra arguments for kubernetes-e2e test.sh suite
       type: string

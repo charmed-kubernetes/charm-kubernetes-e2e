@@ -74,7 +74,7 @@ def messaging():
         hookenv.status_set("blocked", message)
         return
 
-    hookenv.status_set("active", "Ready to test.")
+    hookenv.status_set("active", "Ready to test.sh.")
 
 
 @when("config.changed.channel")
@@ -90,8 +90,8 @@ def install_snaps():
     snap.install("core")
     hookenv.status_set("maintenance", "Installing kubectl snap")
     snap.install("kubectl", channel=channel, classic=True)
-    hookenv.status_set("maintenance", "Installing kubernetes-test snap")
-    snap.install("kubernetes-test", channel=channel, classic=True)
+    hookenv.status_set("maintenance", "Installing kubernetes-test.sh snap")
+    snap.install("kubernetes-test.sh", channel=channel, classic=True)
     set_state("kubernetes-e2e.installed")
 
 
