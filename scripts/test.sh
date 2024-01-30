@@ -40,7 +40,7 @@ echo "JUJU_E2E_START=$(date -u +%s)" | tee $ACTION_LOG
 echo "Using extra args = $EXTRA_ARGS" | tee -a $ACTION_LOG
 echo "Skip tests matching: $SKIP" | tee -a $ACTION_LOG
 echo "JUJU_E2E_VERSION=$(kubectl version | grep Server | cut -d " " -f 5 | cut -d ":" -f 2 | sed s/\"// | sed s/\",//)" | tee -a $ACTION_LOG
-GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.sh.e2e \
+GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
   -kubeconfig /home/ubuntu/.kube/config \
   -host $SERVER \
   -ginkgo.focus $FOCUS \
