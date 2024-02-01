@@ -19,7 +19,7 @@ bases:
     - name: ubuntu
       channel: "22.04"
 requires:
-  kubernetes-master:
+  kubernetes-master: # wokeignore:rule=master
     interface: http
   kube-control:
     interface: kube-control
