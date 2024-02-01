@@ -11,11 +11,6 @@ PARALLELISM=${3}
 TIMEOUT=${4}
 EXTRA_ARGS=${5}
 
-echo "FOCUS: $FOCUS"
-echo "SKIP: $SKIP"
-echo "PARALLELISM: $PARALLELISM"
-echo "EXTRA_ARGS: $EXTRA_ARGS"
-
 if [ ! -f /home/ubuntu/.kube/config ]
 then
   action-fail "Missing Kubernetes configuration."
