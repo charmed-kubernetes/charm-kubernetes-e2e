@@ -11,7 +11,15 @@ from typing import Optional
 
 import ops
 from charms.operator_libs_linux.v2.snap import SnapCache, SnapState
-from ops import ActionEvent, BlockedStatus, EventBase, MaintenanceStatus, WaitingStatus
+from ops import (
+    ActionEvent,
+    ActiveStatus,
+    BlockedStatus,
+    ErrorStatus,
+    EventBase,
+    MaintenanceStatus,
+    WaitingStatus,
+)
 from ops.interface_kube_control import KubeControlRequirer
 from ops.interface_tls_certificates import CertificatesRequires
 
@@ -70,8 +78,9 @@ class KubernetesE2ECharm(ops.CharmBase):
                 self.unit.status = BlockedStatus(evaluation)
             return False
         if not self.kube_control.get_auth_credentials(self.unit.name):
-            self.unit.status = WaitingStatus("Waiting for kube-control: unit credentials")
+            self.unit.status = WaitingStatus("Waiting for kube-control: unit credentials.")
             return False
+        self.unit.status = MaintenanceStatus("Kubernetes authentication completed.")
         self.kube_control.create_kubeconfig(
             self.CA_CERT_PATH, "/root/.kube/config", "root", self.unit.name
         )
@@ -109,15 +118,15 @@ class KubernetesE2ECharm(ops.CharmBase):
         self._install_snaps(channel)
 
     def _install_snaps(self, channel: Optional[str]) -> None:
-        self.unit.status = ops.MaintenanceStatus("Installing core snap")
+        self.unit.status = ops.MaintenanceStatus("Installing core snap.")
         self._ensure_snap("core")
 
         # TODO : What happens to this f-string if channel is "" ?
-        self.unit.status = ops.MaintenanceStatus(f"Installing kubectl snap from channel {channel}")
+        self.unit.status = ops.MaintenanceStatus(f"Installing kubectl snap from channel {channel}.")
         self._ensure_snap("kubectl", channel=channel)
 
         self.unit.status = ops.MaintenanceStatus(
-            f"Installing kubernetes-test from channel {channel}"
+            f"Installing kubernetes-test from channel {channel}."
         )
         self._ensure_snap("kubernetes-test", channel=channel, classic=True)
 
@@ -148,9 +157,12 @@ class KubernetesE2ECharm(ops.CharmBase):
         command = ["scripts/test.sh", focus, skip, parallelism, timeout, extra]
 
         try:
+            self.unit.status = WaitingStatus("Running e2e tests.")
             subprocess.run(command, check=True)
+            self.unit.status = ActiveStatus("Tests completed successfully.")
         except subprocess.CalledProcessError as e:
             logger.error(f"An error occurred: {e}.")
+            self.unit.status = ErrorStatus("Test run failed.")
 
 
 if __name__ == "__main__":  # pragma: nocover
