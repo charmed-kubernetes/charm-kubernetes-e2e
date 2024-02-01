@@ -18,7 +18,7 @@ from pathlib import Path
 
 import ops
 from charms.operator_libs_linux.v2.snap import SnapCache, SnapState
-from ops import BlockedStatus, MaintenanceStatus, WaitingStatus
+from ops import ActionEvent, BlockedStatus, EventBase, MaintenanceStatus, WaitingStatus
 from ops.interface_kube_control import KubeControlRequirer
 from ops.interface_tls_certificates import CertificatesRequires
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 
 
-def determine_arch():
+def determine_arch() -> str:
     """Dpkg wrapper to surface the architecture we are tied to."""
     cmd = ["dpkg", "--print-architecture"]
     output = subprocess.check_output(cmd).decode("utf-8")
@@ -41,7 +41,7 @@ class KubernetesE2ECharm(ops.CharmBase):
 
     CA_CERT_PATH = Path("/srv/kubernetes/ca.crt")
 
-    def __init__(self, *args):
+    def __init__(self, *args) -> None:
         super().__init__(*args)
         self.kube_control = KubeControlRequirer(self)
         self.certificates = CertificatesRequires(self)
@@ -64,11 +64,11 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.framework.observe(self.on.test_action, self._on_test_action)
         self.framework.observe(self.on.upgrade_charm, self._upgrade_charm)
 
-    def _kube_control(self, event):
+    def _kube_control(self, event: EventBase):
         self.kube_control.set_auth_request(self.unit.name)
         return self._check_config(event)
 
-    def _check_kube_control(self, event):
+    def _check_kube_control(self, event: EventBase) -> bool:
         self.unit.status = MaintenanceStatus("Evaluating kubernetes authentication.")
         evaluation = self.kube_control.evaluate_relation(event)
         if evaluation:
@@ -88,7 +88,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         )
         return True
 
-    def _check_certificates(self, event):
+    def _check_certificates(self, event: EventBase) -> bool:
         self.unit.status = MaintenanceStatus("Evaluating certificates.")
         evaluation = self.certificates.evaluate_relation(event)
         if evaluation:
@@ -100,7 +100,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.CA_CERT_PATH.write_text(self.certificates.ca)
         return True
 
-    def _check_config(self, event):  # TODO: Not the best name
+    def _check_config(self, event: EventBase) -> None:  # TODO: Not the best name
         if not self._check_certificates(event):
             return
 
@@ -112,14 +112,15 @@ class KubernetesE2ECharm(ops.CharmBase):
 
         self.unit.status = ops.ActiveStatus("Ready to test.")
 
-    def _upgrade_charm(self, event):
+    def _upgrade_charm(self, event: EventBase) -> None:
         channel = self.config.get("channel")
         self._install_snaps(channel)
 
-    def _install_snaps(self, channel: str):
+    def _install_snaps(self, channel: str | None) -> None:
         self.unit.status = ops.MaintenanceStatus("Installing core snap")
         self._ensure_snap("core")
 
+        # TODO : What happens to this f-string if channel is "" ?
         self.unit.status = ops.MaintenanceStatus(f"Installing kubectl snap from channel {channel}")
         self._ensure_snap("kubectl", channel=channel)
 
@@ -134,7 +135,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         state: SnapState = SnapState.Latest,
         channel: str | None = "",
         classic: bool | None = False,
-    ):
+    ) -> None:
         if not isinstance(name, str) or name == "":
             raise ValueError("A name is required to ensure a snap.")
 
@@ -142,10 +143,10 @@ class KubernetesE2ECharm(ops.CharmBase):
         if not snap.present:
             snap.ensure(state=state, classic=classic, channel=channel)
 
-    def _on_start(self, event):
+    def _on_start(self, event: EventBase) -> None:
         self.unit.status = ops.ActiveStatus()
 
-    def _on_test_action(self, event):
+    def _on_test_action(self, event: ActionEvent) -> None:
         focus = str(event.params.get("focus", ""))
         parallelism = str(event.params.get("parallelism", ""))
         skip = str(event.params.get("skip", ""))
