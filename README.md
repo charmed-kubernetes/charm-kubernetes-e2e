@@ -50,7 +50,7 @@ the charm by inspecting the schema output of the actions:
 ```shell
 $ juju actions kubernetes-e2e --format=yaml --schema
 test:
-  description: Run end-to-end validation test.sh suite
+  description: Run end-to-end validation test suite
   properties:
     focus:
       default: \[Conformance\]
