@@ -1,38 +1,16 @@
-# This file configures Charmcraft.
-# See https://juju.is/docs/sdk/charmcraft-config for guidance.
-
-# (Required)
-# The charm package name, no spaces
-# See https://juju.is/docs/sdk/naming#heading--naming-charms for guidance.
-name: k8s-e2e
-
-# (Required)
-# The charm type, either 'charm' or 'bundle'.
+name: kubernetes-e2e
 type: charm
-
-
-# (Recommended)
-title: Charm Template
-
-
-# (Required)
-summary: A very short one-line summary of the charm.
-
-
-# (Required)
+title: 
+summary: Run e2e validation of a cluster's conformance
 description: |
-  A single sentence that says what the charm is, concisely and memorably.
-
-  A paragraph of one to three short sentences, that describe what the charm does.
-
-  A third paragraph that explains what need the charm meets.
-
-  Finally, a paragraph that describes whom the charm is useful for.
-
-
-# (Required for 'charm' type)
-# A list of environments (OS version and architecture) where charms must be
-# built on and run on.
+  Deploy the Kubernetes e2e framework and validate the conformance of a deployed
+  Kubernetes cluster.
+tags:
+  - validation
+  - conformance
+series:
+  - jammy
+  - focal
 bases:
   - build-on:
     - name: ubuntu
@@ -40,16 +18,6 @@ bases:
     run-on:
     - name: ubuntu
       channel: "22.04"
-
-
-# The containers and resources metadata apply to Kubernetes charms only.
-# See https://juju.is/docs/sdk/metadata-reference for a checklist and guidance.
-# Remove them if not required.
-
-# This config section defines charm config options, and populates the Configure
-# tab on Charmhub.
-# See https://juju.is/docs/config for guidance.
-
 requires:
   kubernetes-master:
     interface: http
@@ -58,7 +26,6 @@ requires:
     limit: 1
   certificates:
     interface: tls-certificates
-
 parts:
   charm:
     build-packages: [git]
