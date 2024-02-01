@@ -1,1 +1,3 @@
 ops ~= 2.5
+git+https://github.com/charmed-kubernetes/interface-kube-control.git@main#subdirectory=ops
+git+https://github.com/charmed-kubernetes/interface-tls-certificates.git@main#subdirectory=ops

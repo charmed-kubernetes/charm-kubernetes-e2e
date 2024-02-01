@@ -46,33 +46,20 @@ bases:
 # See https://juju.is/docs/sdk/metadata-reference for a checklist and guidance.
 # Remove them if not required.
 
-
-# Your workload’s containers.
-containers:
-  k8s-e2e:
-    resource: httpbin-image
-
-
-# This field populates the Resources tab on Charmhub.
-resources:
-  # An OCI image resource for each container listed above.
-  # You may remove this if your charm will run without a workload sidecar container.
-  httpbin-image:
-    type: oci-image
-    description: OCI image for httpbin
-    # The upstream-source field is ignored by Juju. It is included here as a 
-    # reference so the integration testing suite knows which image to deploy
-    # during testing. This field is also used by the 'canonical/charming-scripts'
-    # Github action for automated releasing.
-    upstream-source: kennethreitz/httpbin
-
-
 # This config section defines charm config options, and populates the Configure
 # tab on Charmhub.
 # See https://juju.is/docs/config for guidance.
 
-
+requires:
+  kubernetes-master:
+    interface: http
+  kube-control:
+    interface: kube-control
+    limit: 1
+  certificates:
+    interface: tls-certificates
 
 parts:
   charm:
+    build-packages: [git]
     prime: ["scripts/**"]

@@ -16,8 +16,6 @@ echo "SKIP: $SKIP"
 echo "PARALLELISM: $PARALLELISM"
 echo "EXTRA_ARGS: $EXTRA_ARGS"
 
-exit 0
-
 if [ ! -f /home/ubuntu/.kube/config ]
 then
   action-fail "Missing Kubernetes configuration."
