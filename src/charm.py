@@ -7,7 +7,6 @@
 import logging
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 import ops
 from charms.operator_libs_linux.v2.snap import SnapCache, SnapState
@@ -117,8 +116,8 @@ class KubernetesE2ECharm(ops.CharmBase):
         channel = self.config.get("channel")
         self._install_snaps(channel)
 
-    def _install_snaps(self, channel: Optional[str]) -> None:
-        self.unit.status = ops.MaintenanceStatus("Installing core snap.")
+    def _install_snaps(self, channel: str | None) -> None:
+        self.unit.status = ops.MaintenanceStatus("Installing core snap")
         self._ensure_snap("core")
 
         # TODO : What happens to this f-string if channel is "" ?
@@ -134,8 +133,8 @@ class KubernetesE2ECharm(ops.CharmBase):
         self,
         name: str,
         state: SnapState = SnapState.Latest,
-        channel: Optional[str] = "",
-        classic: Optional[bool] = False,
+        channel: str | None = "",
+        classic: bool | None = False,
     ) -> None:
         if not isinstance(name, str) or name == "":
             raise ValueError("A name is required to ensure a snap.")
