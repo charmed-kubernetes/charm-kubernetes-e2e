@@ -5,12 +5,6 @@ summary: Run e2e validation of a cluster's conformance
 description: |
   Deploy the Kubernetes e2e framework and validate the conformance of a deployed
   Kubernetes cluster.
-tags:
-  - validation
-  - conformance
-series:
-  - jammy
-  - focal
 bases:
   - build-on:
     - name: ubuntu
