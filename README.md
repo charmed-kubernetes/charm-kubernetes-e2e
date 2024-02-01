@@ -36,7 +36,7 @@ The e2e test is encapsulated as an action to ensure consistent runs of the
 end to end test. The defaults are sensible for most deployments.
 
 ```shell
-juju run-action kubernetes-e2e/0 test
+juju run kubernetes-e2e/0 test
 ```
 
 ### Tuning the e2e test
@@ -74,7 +74,7 @@ a deployed cluster. The following example will skip the `Flaky`, `Slow`, and
 `Feature` labeled tests:
 
 ```shell
-juju run-action kubernetes-e2e/0 test skip='\[(Flaky|Slow|Feature:.*)\]'
+juju run kubernetes-e2e/0 test skip='\[(Flaky|Slow|Feature:.*)\]'
 ```
 
 > Note: the escaping of the regex due to how bash handles brackets.
@@ -105,7 +105,7 @@ times taking **greater than 1 hour**, depending on configuration.
 ##### Flat file
 
 ```shell
-$ juju run-action kubernetes-e2e/0 test
+$ juju run kubernetes-e2e/0 test
 Action queued with id: 4ceed33a-d96d-465a-8f31-20d63442e51b
 
 $ juju scp kubernetes-e2e/0:4ceed33a-d96d-465a-8f31-20d63442e51b.log .
@@ -114,10 +114,10 @@ $ juju scp kubernetes-e2e/0:4ceed33a-d96d-465a-8f31-20d63442e51b.log .
 ##### Action result output
 
 ```shell
-$ juju run-action kubernetes-e2e/0 test
+$ juju run kubernetes-e2e/0 test
 Action queued with id: 4ceed33a-d96d-465a-8f31-20d63442e51b
 
-$ juju show-action-output 4ceed33a-d96d-465a-8f31-20d63442e51b
+$ juju show-task 4ceed33a-d96d-465a-8f31-20d63442e51b
 ```
 
 ## Known issues

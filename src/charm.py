@@ -1,16 +1,8 @@
 #!/usr/bin/env python3
-# Copyright 2024 user
+# Copyright 2024 Canonical
 # See LICENSE file for licensing details.
 #
 # Learn more at: https://juju.is/docs/sdk
-
-"""Charm the service.
-
-Refer to the following tutorial that will help you
-develop a new k8s charm using the Operator Framework:
-
-https://juju.is/docs/sdk/create-a-minimal-kubernetes-charm
-"""
 
 import logging
 import subprocess
@@ -23,7 +15,6 @@ from ops import ActionEvent, BlockedStatus, EventBase, MaintenanceStatus, Waitin
 from ops.interface_kube_control import KubeControlRequirer
 from ops.interface_tls_certificates import CertificatesRequires
 
-# Log messages can be retrieved using juju debug-log
 logger = logging.getLogger(__name__)
 
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
