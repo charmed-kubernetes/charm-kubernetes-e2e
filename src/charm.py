@@ -14,7 +14,6 @@ from ops import (
     ActionEvent,
     ActiveStatus,
     BlockedStatus,
-    ErrorStatus,
     EventBase,
     MaintenanceStatus,
     WaitingStatus,
@@ -121,7 +120,9 @@ class KubernetesE2ECharm(ops.CharmBase):
         self._ensure_snap("core")
 
         # TODO : What happens to this f-string if channel is "" ?
-        self.unit.status = ops.MaintenanceStatus(f"Installing kubectl snap from channel {channel}.")
+        self.unit.status = ops.MaintenanceStatus(
+            f"Installing kubectl snap from channel {channel}."
+        )
         self._ensure_snap("kubectl", channel=channel)
 
         self.unit.status = ops.MaintenanceStatus(
@@ -156,12 +157,12 @@ class KubernetesE2ECharm(ops.CharmBase):
         command = ["scripts/test.sh", focus, skip, parallelism, timeout, extra]
 
         try:
-            self.unit.status = WaitingStatus("Running e2e tests.")
+            self.unit.status = MaintenanceStatus("Running e2e tests.")
             subprocess.run(command, check=True)
             self.unit.status = ActiveStatus("Tests completed successfully.")
         except subprocess.CalledProcessError as e:
             logger.error(f"An error occurred: {e}.")
-            self.unit.status = ErrorStatus("Test run failed.")
+            self.unit.status = BlockedStatus("Test run failed.")
 
 
 if __name__ == "__main__":  # pragma: nocover
