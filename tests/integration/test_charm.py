@@ -25,7 +25,7 @@ async def test_build_and_deploy(ops_test: OpsTest):
     # Build and deploy charm from local source folder
     charm = await ops_test.build_charm(".")
 
-    await ops_test.model.deploy(charm, application_name=APP_NAME, series="focal")
+    await ops_test.model.deploy(charm, application_name=APP_NAME)
 
     # Deploy the charm and wait for active/idle status
     async with ops_test.fast_forward():
