@@ -20,7 +20,7 @@ and then relate the `kubernetes-e2e` charm.
 
 ```shell
 juju deploy kubernetes-core
-juju deploy ./kubernetes-e2e_ubuntu-22.04-amd64.charm kubernetes-e2e
+juju deploy kubernetes-e2e
 juju integrate kubernetes-e2e:kube-control kubernetes-control-plane:kube-control
 juju integrate kubernetes-e2e:kubernetes-master kubernetes-control-plane:kube-api-endpoint
 juju integrate kubernetes-e2e easyrsa
