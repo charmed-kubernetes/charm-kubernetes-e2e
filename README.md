@@ -37,7 +37,7 @@ The e2e test is encapsulated as an action to ensure consistent runs of the
 end to end test. The defaults are sensible for most deployments.
 
 ```shell
-juju run kubernetes-e2e/0 test
+juju run kubernetes-e2e/0 test --wait=2h
 ```
 
 ### Tuning the e2e test
