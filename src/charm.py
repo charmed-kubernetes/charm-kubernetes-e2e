@@ -49,10 +49,11 @@ class KubernetesE2ECharm(ops.CharmBase):
 
         self.snap_cache = SnapCache()
 
-        self.framework.observe(self.on.kube_control_relation_created, self._kube_control)
-        self.framework.observe(self.on.kube_control_relation_joined, self._kube_control)
-        self.framework.observe(self.on.kube_control_relation_changed, self._check_config)
-        self.framework.observe(self.on.kube_control_relation_broken, self._check_config)
+        kubecontrol = self.on["kube-control"]
+        self.framework.observe(kubecontrol.relation_created, self._kube_control)
+        self.framework.observe(kubecontrol.relation_joined, self._kube_control)
+        self.framework.observe(kubecontrol.relation_changed, self._check_config)
+        self.framework.observe(kubecontrol.relation_broken, self._check_config)
 
         self.framework.observe(self.on.certificates_relation_created, self._check_config)
         self.framework.observe(self.on.certificates_relation_changed, self._check_config)
