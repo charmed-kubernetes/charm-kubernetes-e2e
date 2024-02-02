@@ -50,18 +50,18 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.snap_cache = SnapCache()
 
         kubecontrol = self.on["kube-control"]
-        self.framework.observe(kubecontrol.relation_created, self._kube_control)
+        self.framework.observe(kubecontrol.relation_broken, self._check_config)
         self.framework.observe(kubecontrol.relation_joined, self._kube_control)
         self.framework.observe(kubecontrol.relation_changed, self._check_config)
-        self.framework.observe(kubecontrol.relation_broken, self._check_config)
 
-        self.framework.observe(self.on.certificates_relation_created, self._check_config)
-        self.framework.observe(self.on.certificates_relation_changed, self._check_config)
-        self.framework.observe(self.on.certificates_relation_broken, self._check_config)
+        certificates = self.on["certificates"]
+        self.framework.observe(certificates.relation_broken, self._check_config)
+        self.framework.observe(certificates.relation_created, self._check_config)
+        self.framework.observe(certificates.relation_changed, self._check_config)
 
         self.framework.observe(self.on.start, self._on_start)
-        self.framework.observe(self.on.config_changed, self._check_config)
         self.framework.observe(self.on.test_action, self._on_test_action)
+        self.framework.observe(self.on.config_changed, self._check_config)
         self.framework.observe(self.on.upgrade_charm, self._upgrade_charm)
 
     def _kube_control(self, event: EventBase):
@@ -121,15 +121,10 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.unit.status = ops.MaintenanceStatus("Installing core snap.")
         self._ensure_snap("core")
 
-        # TODO : What happens to this f-string if channel is "" ?
-        self.unit.status = ops.MaintenanceStatus(
-            f"Installing kubectl snap from channel {channel}."
-        )
+        self.unit.status = ops.MaintenanceStatus("Installing kubectl snap.")
         self._ensure_snap("kubectl", channel=channel)
 
-        self.unit.status = ops.MaintenanceStatus(
-            f"Installing kubernetes-test from channel {channel}."
-        )
+        self.unit.status = ops.MaintenanceStatus("Installing kubernetes-test snap.")
         self._ensure_snap("kubernetes-test", channel=channel, classic=True)
 
     def _ensure_snap(
