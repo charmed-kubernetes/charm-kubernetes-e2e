@@ -53,25 +53,25 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.snap_cache = SnapCache()
 
         kubecontrol = self.on["kube-control"]
-        self.framework.observe(kubecontrol.relation_broken, self._check_config)
-        self.framework.observe(kubecontrol.relation_joined, self._kube_control)
-        self.framework.observe(kubecontrol.relation_changed, self._check_config)
+        self.framework.observe(kubecontrol.relation_broken, self._setup_environment)
+        self.framework.observe(kubecontrol.relation_joined, self._kube_control_relation_joined)
+        self.framework.observe(kubecontrol.relation_changed, self._setup_environment)
 
         certificates = self.on["certificates"]
-        self.framework.observe(certificates.relation_broken, self._check_config)
-        self.framework.observe(certificates.relation_created, self._check_config)
-        self.framework.observe(certificates.relation_changed, self._check_config)
+        self.framework.observe(certificates.relation_broken, self._setup_environment)
+        self.framework.observe(certificates.relation_created, self._setup_environment)
+        self.framework.observe(certificates.relation_changed, self._setup_environment)
 
         self.framework.observe(self.on.start, self._on_start)
         self.framework.observe(self.on.test_action, self._on_test_action)
-        self.framework.observe(self.on.config_changed, self._check_config)
+        self.framework.observe(self.on.config_changed, self._setup_environment)
         self.framework.observe(self.on.upgrade_charm, self._upgrade_charm)
 
-    def _kube_control(self, event: EventBase):
+    def _kube_control_relation_joined(self, event: EventBase):
         self.kube_control.set_auth_request(self.unit.name)
-        return self._check_config(event)
+        return self._setup_environment(event)
 
-    def _check_kube_control(self, event: EventBase) -> bool:
+    def _ensure_kube_control_relation(self, event: EventBase) -> bool:
         self.unit.status = MaintenanceStatus("Evaluating kubernetes authentication.")
         evaluation = self.kube_control.evaluate_relation(event)
         if evaluation:
@@ -92,7 +92,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         )
         return True
 
-    def _check_certificates(self, event: EventBase) -> bool:
+    def _ensure_certificates_relation(self, event: EventBase) -> bool:
         self.unit.status = MaintenanceStatus("Evaluating certificates.")
         evaluation = self.certificates.evaluate_relation(event)
         if evaluation:
@@ -104,11 +104,11 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.CA_CERT_PATH.write_text(self.certificates.ca)
         return True
 
-    def _check_config(self, event: EventBase) -> None:  # TODO: Not the best name
-        if not self._check_certificates(event):
+    def _setup_environment(self, event: EventBase) -> None:
+        if not self._ensure_certificates_relation(event):
             return
 
-        if not self._check_kube_control(event):
+        if not self._ensure_kube_control_relation(event):
             return
 
         channel = self.config.get("channel")
@@ -121,9 +121,6 @@ class KubernetesE2ECharm(ops.CharmBase):
         self._install_snaps(channel)
 
     def _install_snaps(self, channel: Optional[str]) -> None:
-        self.unit.status = ops.MaintenanceStatus("Installing core snap.")
-        self._ensure_snap("core")
-
         self.unit.status = ops.MaintenanceStatus("Installing kubectl snap.")
         self._ensure_snap("kubectl", channel=channel)
 
@@ -147,7 +144,7 @@ class KubernetesE2ECharm(ops.CharmBase):
     def _on_start(self, event: EventBase) -> None:
         self.unit.status = ops.ActiveStatus()
 
-    def _check_kube_config(self, event: ActionEvent) -> bool:
+    def _check_kube_config_exists(self, event: ActionEvent) -> bool:
         if not pathlib.Path(KUBE_CONFIG_PATH).exists():
             event.fail("Missing Kubernetes configuration. See logs for info.")
             logger.error("Relate to the certificate authority and kubernetes-control-plane.")
@@ -172,10 +169,10 @@ class KubernetesE2ECharm(ops.CharmBase):
             return str(event.params.get(p, ""))
 
         # Param order matters here because test.sh uses $1, $2, etc.
-        args = [param_get(param) for param in ["focus", "parallelism", "skip", "timeout", "extra"]]
+        args = [param_get(param) for param in ["focus", "skip", "parallelism", "timeout", "extra"]]
         command = ["scripts/test.sh", *args]
 
-        if not self._check_kube_config(event):
+        if not self._check_kube_config_exists(event):
             return
 
         event.log(f"Running this command: {' '.join(command)}")

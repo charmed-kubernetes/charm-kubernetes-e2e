@@ -1,6 +1,6 @@
 options:
   channel:
     type: string
-    default: "1.29/beta"
+    default: "latest/edge"
     description: |
-      Snap channel to install Kubernetes snaps from
+      Snap channel from which to install the kubernetes-test snap.
