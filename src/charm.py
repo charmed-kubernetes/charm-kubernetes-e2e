@@ -155,7 +155,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _log_has_errors(self, event: ActionEvent) -> bool:
-        action_uuid = os.getenv('JUJU_ACTION_UUID')
+        action_uuid = os.getenv("JUJU_ACTION_UUID")
 
         log_file_path = pathlib.Path(f"{action_uuid}.log")
 
@@ -170,6 +170,7 @@ class KubernetesE2ECharm(ops.CharmBase):
     def _on_test_action(self, event: ActionEvent) -> None:
         def param_get(p):
             return str(event.params.get(p, ""))
+
         args = [param_get(param) for param in ["focus", "parallelism", "skip", "timeout", "extra"]]
         command = ["scripts/test.sh", *args]
         if not self._check_kube_config(event):
