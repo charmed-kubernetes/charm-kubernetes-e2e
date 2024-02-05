@@ -165,7 +165,7 @@ class KubernetesE2ECharm(ops.CharmBase):
             event.fail(msg)
             return False
 
-        return "Test Suite failed" in log_file_path.read_text()
+        return "Test Suite Failed" in log_file_path.read_text()
 
     def _on_test_action(self, event: ActionEvent) -> None:
         def param_get(p):
