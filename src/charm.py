@@ -171,12 +171,12 @@ class KubernetesE2ECharm(ops.CharmBase):
         def param_get(p):
             return str(event.params.get(p, ""))
 
+        # Param order matters here because test.sh uses $1, $2, etc.
         args = [param_get(param) for param in ["focus", "parallelism", "skip", "timeout", "extra"]]
         command = ["scripts/test.sh", *args]
+
         if not self._check_kube_config(event):
             return
-
-        command = ["./scripts/test.sh", *args]
 
         event.log(f"Running this command: {' '.join(command)}")
 
