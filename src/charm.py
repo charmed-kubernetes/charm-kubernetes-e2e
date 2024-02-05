@@ -5,7 +5,10 @@
 # Learn more at: https://juju.is/docs/sdk
 
 import logging
+import os
+import pathlib
 import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -13,7 +16,6 @@ import ops
 from charms.operator_libs_linux.v2.snap import SnapCache, SnapState
 from ops import (
     ActionEvent,
-    ActiveStatus,
     BlockedStatus,
     EventBase,
     MaintenanceStatus,
@@ -25,6 +27,7 @@ from ops.interface_tls_certificates import CertificatesRequires
 logger = logging.getLogger(__name__)
 
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
+KUBE_CONFIG_PATH = "/home/ubuntu/.kube/config"
 
 
 def determine_arch() -> str:
@@ -144,22 +147,44 @@ class KubernetesE2ECharm(ops.CharmBase):
     def _on_start(self, event: EventBase) -> None:
         self.unit.status = ops.ActiveStatus()
 
+    def _check_kube_config(self, event: ActionEvent) -> bool:
+        if not pathlib.Path(KUBE_CONFIG_PATH).exists():
+            event.fail("Missing Kubernetes configuration. See logs for info.")
+            logger.error("Relate to the certificate authority and kubernetes-control-plane.")
+            return False
+        return True
+
+    def _log_has_errors(self, event: ActionEvent) -> bool:
+        action_uuid = os.getenv('JUJU_ACTION_UUID')
+
+        log_file_path = pathlib.Path(f"{action_uuid}.log")
+
+        if not log_file_path.exists():
+            msg = f"Logfile not found at expected location {log_file_path}"
+            logger.error(msg)
+            event.fail(msg)
+            return False
+
+        return "Test Suite failed" in log_file_path.read_text()
+
     def _on_test_action(self, event: ActionEvent) -> None:
-        focus = str(event.params.get("focus", ""))
-        parallelism = str(event.params.get("parallelism", ""))
-        skip = str(event.params.get("skip", ""))
-        timeout = str(event.params.get("timeout", ""))
-        extra = str(event.params.get("extra", ""))
+        def param_get(p):
+            return str(event.params.get(p, ""))
+        args = [param_get(param) for param in ["focus", "parallelism", "skip", "timeout", "extra"]]
+        command = ["scripts/test.sh", *args]
+        if not self._check_kube_config(event):
+            return
 
-        command = ["scripts/test.sh", focus, skip, parallelism, timeout, extra]
+        command = ["./scripts/test.sh", *args]
 
-        try:
-            self.unit.status = MaintenanceStatus("Running e2e tests.")
-            subprocess.run(command, check=True)
-            self.unit.status = ActiveStatus("Tests completed successfully.")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"An error occurred: {e}.")
-            self.unit.status = BlockedStatus("Test run failed.")
+        event.log(f"Running this command: {' '.join(command)}")
+
+        process = subprocess.run(command, capture_output=False, check=True)
+
+        if self._log_has_errors or process.returncode != 0:
+            sys.exit(process.returncode)
+        else:
+            event.set_results({"result": "Tests ran successfully."})
 
 
 if __name__ == "__main__":  # pragma: nocover

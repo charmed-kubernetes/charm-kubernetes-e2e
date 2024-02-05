@@ -11,13 +11,6 @@ PARALLELISM=${3}
 TIMEOUT=${4}
 EXTRA_ARGS=${5}
 
-if [ ! -f /home/ubuntu/.kube/config ]
-then
-  action-fail "Missing Kubernetes configuration."
-  action-set suggestion="Relate to the certificate authority, and kubernetes-control-plane"
-  exit 0
-fi
-
 # get the host from the config file
 SERVER=$(cat /home/ubuntu/.kube/config | grep server | sed 's/    server: //')
 
@@ -53,7 +46,3 @@ tar -czf $ACTION_LOG_TGZ ${JUJU_ACTION_UUID}.log
 
 action-set log="$ACTION_LOG_TGZ"
 action-set junit="$ACTION_JUNIT_TGZ"
-
-if tail ${JUJU_ACTION_UUID}.log | grep -q "Test Suite Failed"; then
-  action-fail "Failure detected in the logs"
-fi
