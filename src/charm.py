@@ -6,7 +6,6 @@
 
 import logging
 import os
-import pathlib
 import subprocess
 import sys
 from pathlib import Path
@@ -145,20 +144,20 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.unit.status = ops.ActiveStatus()
 
     def _check_kube_config_exists(self, event: ActionEvent) -> bool:
-        if not pathlib.Path(KUBE_CONFIG_PATH).exists():
+        if not Path(KUBE_CONFIG_PATH).exists():
             event.fail("Missing Kubernetes configuration. See logs for info.")
-            logger.error("Relate to the certificate authority and kubernetes-control-plane.")
+            event.log("Relate to the certificate authority and kubernetes-control-plane.")
             return False
         return True
 
     def _log_has_errors(self, event: ActionEvent) -> bool:
         action_uuid = os.getenv("JUJU_ACTION_UUID")
 
-        log_file_path = pathlib.Path(f"{action_uuid}.log")
+        log_file_path = Path(f"/home/ubuntu/{action_uuid}.log")
 
         if not log_file_path.exists():
             msg = f"Logfile not found at expected location {log_file_path}"
-            logger.error(msg)
+            event.log(msg)
             event.fail(msg)
             return False
 
@@ -179,7 +178,7 @@ class KubernetesE2ECharm(ops.CharmBase):
 
         process = subprocess.run(command, capture_output=False, check=True)
 
-        if self._log_has_errors or process.returncode != 0:
+        if self._log_has_errors(event) or process.returncode != 0:
             sys.exit(process.returncode)
         else:
             event.set_results({"result": "Tests ran successfully."})
