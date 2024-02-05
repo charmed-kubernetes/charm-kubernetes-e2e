@@ -3,6 +3,7 @@
 # See LICENSE file for licensing details.
 
 import logging
+import shlex
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 METADATA = yaml.safe_load(Path("./charmcraft.yaml").read_text())
 APP_NAME = METADATA["name"]
 TEST_ACTION_NAME = "test"
+READY_MESSAGE = "Ready to test."
 # Allow e2e tests to run with up to 2 non-ready nodes
 EXTRA_ARGS = "-allowed-not-ready-nodes 2"
 # Run reduced test suite
@@ -22,17 +24,40 @@ SKIP_TESTS = r"\[(Flaky|Slow|Conformance|Feature:.*)\]"
 
 @pytest.mark.abort_on_fail
 async def test_build_and_deploy(ops_test: OpsTest):
-    # Build and deploy charm from local source folder
+    """Build the kubernetes-e2e charm and deploy it.
+
+    Assert on the unit status before any relations/configurations take place.
+    """
+    logger.info("Build charm...")
     charm = await ops_test.build_charm(".")
 
-    await ops_test.model.deploy(charm, application_name=APP_NAME)
+    overlays = [
+        ops_test.Bundle("charmed-kubernetes", channel="1.29/beta"),
+        Path("tests/data/charm.yaml"),
+    ]
 
-    # Deploy the charm and wait for active/idle status
-    async with ops_test.fast_forward():
-        await ops_test.model.wait_for_idle(
-            apps=[APP_NAME], status="active", raise_on_blocked=True, timeout=1000, idle_period=1
-        )
-        assert ops_test.model.applications[APP_NAME].units[0].workload_status == "active"
+    logger.info("Rendering overlays...")
+    bundle, *overlays = await ops_test.async_render_bundles(*overlays, charm=charm)
+
+    logger.info("Deploy charm...")
+    model = ops_test.model_full_name
+
+    cmd = f"juju deploy -m {model} {bundle} " + " ".join(f"--overlay={f}" for f in overlays)
+
+    logger.info(cmd)
+    rc, stdout, stderr = await ops_test.run(*shlex.split(cmd))
+    assert rc == 0, f"Bundle deploy failed: {(stderr or stdout).strip()}"
+
+    logger.info(stdout)
+    await ops_test.model.block_until(
+        lambda: "kubernetes-e2e" in ops_test.model.applications, timeout=60
+    )
+
+    await ops_test.model.wait_for_idle(status="active", timeout=60 * 60)
+
+    unit = ops_test.model.applications[APP_NAME].units[0]
+    # Check unit status message
+    assert unit.workload_status_message == READY_MESSAGE
 
 
 async def test_action_test(ops_test: OpsTest):
