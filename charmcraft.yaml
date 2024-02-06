@@ -1,0 +1,29 @@
+name: kubernetes-e2e
+type: charm
+title: 
+summary: Run e2e validation of a cluster's conformance
+description: |
+  Deploy the Kubernetes e2e framework and validate the conformance of a deployed
+  Kubernetes cluster.
+bases:
+  - build-on:
+    - name: ubuntu
+      channel: "20.04"
+      architectures: [amd64]
+    run-on:
+    - name: ubuntu
+      channel: "20.04"
+      architectures: [amd64, arm64]
+    - name: ubuntu
+      channel: "22.04"
+      architectures: [amd64, arm64]
+requires:
+  kube-control:
+    interface: kube-control
+    limit: 1
+  certificates:
+    interface: tls-certificates
+parts:
+  charm:
+    build-packages: [git]
+    prime: ["scripts/**"]

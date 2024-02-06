@@ -7,7 +7,5 @@ applications:
 relations:
 - - kubernetes-e2e:kube-control
   - kubernetes-control-plane:kube-control
-- - kubernetes-e2e:kubernetes-master  # wokeignore:rule=master
-  - kubernetes-control-plane:kube-api-endpoint
 - - kubernetes-e2e
   - easyrsa

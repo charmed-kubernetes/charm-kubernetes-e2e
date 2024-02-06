@@ -20,10 +20,10 @@ and then relate the `kubernetes-e2e` charm.
 
 ```shell
 juju deploy kubernetes-core
-juju deploy cs:~containers/kubernetes-e2e
-juju add-relation kubernetes-e2e:kube-control kubernetes-control-plane:kube-control
-juju add-relation kubernetes-e2e:kubernetes-master kubernetes-control-plane:kube-api-endpoint
-juju add-relation kubernetes-e2e easyrsa
+juju deploy kubernetes-e2e
+juju integrate kubernetes-e2e:kube-control kubernetes-control-plane:kube-control
+juju integrate kubernetes-e2e easyrsa
+juju add-unit kubernetes-worker  # to test with 2 worker nodes
 ```
 
 
@@ -36,7 +36,7 @@ The e2e test is encapsulated as an action to ensure consistent runs of the
 end to end test. The defaults are sensible for most deployments.
 
 ```shell
-juju run-action kubernetes-e2e/0 test
+juju run kubernetes-e2e/0 test --wait=2h
 ```
 
 ### Tuning the e2e test
@@ -50,15 +50,23 @@ the charm by inspecting the schema output of the actions:
 ```shell
 $ juju actions kubernetes-e2e --format=yaml --schema
 test:
-  description: Run end-to-end validation test suite
+  description: Execute an end to end test.
   properties:
+    extra:
+      default: ""
+      description: Extra arguments for kubernetes-e2e test suite
+      type: string
     focus:
       default: \[Conformance\]
-      description: Regex focus for executing the test
+      description: Run tests matching the focus regex pattern.
       type: string
+    parallelism:
+      default: 25
+      description: The number of test nodes to run in parallel.
+      type: integer
     skip:
-      default: \[Flaky\]
-      description: Regex of tests to skip
+      default: \[Flaky\]|\[Serial\]
+      description: Skip tests matching the skip regex pattern.
       type: string
     timeout:
       default: 30000
@@ -74,7 +82,7 @@ a deployed cluster. The following example will skip the `Flaky`, `Slow`, and
 `Feature` labeled tests:
 
 ```shell
-juju run-action kubernetes-e2e/0 test skip='\[(Flaky|Slow|Feature:.*)\]'
+juju run kubernetes-e2e/0 test skip='\[(Flaky|Slow|Feature:.*)\]'
 ```
 
 > Note: the escaping of the regex due to how bash handles brackets.
@@ -105,19 +113,25 @@ times taking **greater than 1 hour**, depending on configuration.
 ##### Flat file
 
 ```shell
-$ juju run-action kubernetes-e2e/0 test
-Action queued with id: 4ceed33a-d96d-465a-8f31-20d63442e51b
+$ juju run kubernetes-e2e/0 test --wait=2h
+Running operation 2 with 1 task
+  - task 3 on unit-kubernetes-e2e-0
 
-$ juju scp kubernetes-e2e/0:4ceed33a-d96d-465a-8f31-20d63442e51b.log .
+Waiting for task 3...
+
+$ juju scp kubernetes-e2e/0:5.log .
 ```
 
 ##### Action result output
 
 ```shell
-$ juju run-action kubernetes-e2e/0 test
-Action queued with id: 4ceed33a-d96d-465a-8f31-20d63442e51b
+$ juju run kubernetes-e2e/0 test
+Running operation 2 with 1 task
+  - task 3 on unit-kubernetes-e2e-0
 
-$ juju show-action-output 4ceed33a-d96d-465a-8f31-20d63442e51b
+Waiting for task 3...
+
+$ juju show-task 3
 ```
 
 ## Known issues
