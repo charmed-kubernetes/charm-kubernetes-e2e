@@ -9,7 +9,7 @@ FOCUS=${1}
 SKIP=${2}
 PARALLELISM=${3}
 TIMEOUT=${4}
-EXTRA_ARGS=${5}
+EXTRA_ARGS="${@:5}"
 
 # get the host from the config file
 SERVER=$(cat /home/ubuntu/.kube/config | grep server | sed 's/    server: //')
@@ -31,8 +31,8 @@ GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
   -host $SERVER \
   -ginkgo.focus $FOCUS \
   -ginkgo.skip "$SKIP" \
-  $EXTRA_ARGS \
-  -report-dir $ACTION_JUNIT 2>&1 | tee -a $ACTION_LOG
+  ${EXTRA_ARGS[@]} \
+  -report-dir $ACTION_JUNIT 2>&1 | tee -a $ACTION_LOG \
 
 # This appends the END TIMESTAMP to the e2e build log
 echo "JUJU_E2E_END=$(date -u +%s)" | tee -a $ACTION_LOG

@@ -8,6 +8,7 @@ import logging
 import os
 import subprocess
 import sys
+import shlex
 from pathlib import Path
 from typing import Optional
 
@@ -28,13 +29,33 @@ logger = logging.getLogger(__name__)
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 KUBE_CONFIG_PATH = "/home/ubuntu/.kube/config"
 
+class KubeConfigResourceManager:
+    """Manage the kubeconfig resource."""
+    def __init__(self):
+        self.kube_config_path = Path(KUBE_CONFIG_PATH)
+        self.resource = self.model.resources.fetch("kubeconfig")
 
-def determine_arch() -> str:
-    """Dpkg wrapper to surface the architecture we are tied to."""
-    cmd = ["dpkg", "--print-architecture"]
-    output = subprocess.check_output(cmd).decode("utf-8")
+    def _ensure_directory_exists(self):
+        os.makedirs(self.kube_config_path.parent, exist_ok=True)
 
-    return output.rstrip()
+    def _read_kubeconfig_resource(self):
+        with open(self.resource, "r") as f:
+            return f.read()
+
+    def is_valid_kubeconfig_resource(self) -> bool:
+        """Check if the kubeconfig resource is not an empty file."""
+        self._ensure_directory_exists()
+        content = self._read_kubeconfig_resource()
+
+        if not content:
+            return False
+        return True
+
+    def write_kubeconfig_resource(self) -> None:
+        """Write the kubeconfig resource to the expected location."""
+        self._ensure_directory_exists()
+        content = self._read_kubeconfig_resource()
+        self.kube_config_path.write_text(content)
 
 
 class KubernetesE2ECharm(ops.CharmBase):
@@ -100,11 +121,16 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _setup_environment(self, event: EventBase) -> None:
-        if not self._ensure_certificates_relation(event):
-            return
+        kubeconfig_resource_manager = KubeConfigResourceManager()
 
-        if not self._ensure_kube_control_relation(event):
-            return
+        if kubeconfig_resource_manager.is_valid_kubeconfig_resource():
+            kubeconfig_resource_manager.write_kubeconfig_resource()
+        else:
+            if not self._ensure_certificates_relation(event):
+                return
+
+            if not self._ensure_kube_control_relation(event):
+                return
 
         channel = self.config.get("channel")
         self._install_snaps(channel)
@@ -142,15 +168,19 @@ class KubernetesE2ECharm(ops.CharmBase):
             return str(event.params.get(p, ""))
 
         # Param order matters here because test.sh uses $1, $2, etc.
-        args = [param_get(param) for param in ["focus", "skip", "parallelism", "timeout", "extra"]]
+        args = [param_get(param) for param in ["focus", "skip", "parallelism", "timeout"]]
+        args += shlex.split(param_get("extra"))
+
         command = ["scripts/test.sh", *args]
 
         if not self._check_kube_config_exists(event):
             return
 
-        event.log(f"Running this command: {' '.join(command)}")
+        event.log(f"Running scripts/test.sh: {' '.join(command)}")
 
         process = subprocess.run(command, capture_output=False, check=True)
+
+        self.unit.status = MaintenanceStatus("Tests running...")
 
         if self._log_has_errors(event) or process.returncode != 0:
             sys.exit(process.returncode)

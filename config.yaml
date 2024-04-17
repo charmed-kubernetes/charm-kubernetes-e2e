@@ -4,3 +4,8 @@ options:
     default: "latest/edge"
     description: |
       Snap channel from which to install the kubernetes-test snap.
+  context:
+    type: string
+    default: ""
+    description: |
+      The context to use from the kubeconfig file.
