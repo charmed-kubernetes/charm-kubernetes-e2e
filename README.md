@@ -25,6 +25,7 @@ First, deploy k8s-operator and k8s-worker, and relate them.
 ```
 juju deploy k8s
 juju deploy k8s-worker
+juju expose k8s
 juju integrate k8s k8s-worker:cluster
 ```
 

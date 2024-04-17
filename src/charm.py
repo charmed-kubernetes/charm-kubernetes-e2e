@@ -35,29 +35,32 @@ class KubeConfigResourceManager:
 
     def __init__(self, model: ops.model.Model):
         self.kube_config_path = Path(KUBE_CONFIG_PATH)
-        self.resource = model.resources.fetch("kubeconfig")
+
+        try:
+            self.resource = model.resources.fetch("kubeconfig")
+        except NameError:
+            self.resource = None
 
     def _ensure_directory_exists(self):
         os.makedirs(self.kube_config_path.parent, exist_ok=True)
 
     def _read_kubeconfig_resource(self):
-        with open(self.resource, "r") as f:
-            return f.read()
+        self._ensure_directory_exists()
+
+        if self.resource is not None:
+            with open(self.resource, "r") as f:
+                return f.read()
 
     def is_valid_kubeconfig_resource(self) -> bool:
         """Check if the kubeconfig resource is not an empty file."""
-        self._ensure_directory_exists()
-        content = self._read_kubeconfig_resource()
-
-        if not content:
+        if not self._read_kubeconfig_resource():
             return False
         return True
 
     def write_kubeconfig_resource(self) -> None:
         """Write the kubeconfig resource to the expected location."""
-        self._ensure_directory_exists()
-        content = self._read_kubeconfig_resource()
-        self.kube_config_path.write_text(content)
+        if content := self._read_kubeconfig_resource():
+            self.kube_config_path.write_text(content)
 
 
 class KubernetesE2ECharm(ops.CharmBase):
