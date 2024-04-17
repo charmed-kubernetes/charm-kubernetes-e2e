@@ -41,15 +41,17 @@ class KubeConfigResourceManager:
         except NameError:
             self.resource = None
 
-    def _ensure_directory_exists(self):
+    def _ensure_directory_exists(self) -> None:
         os.makedirs(self.kube_config_path.parent, exist_ok=True)
 
-    def _read_kubeconfig_resource(self):
+    def _read_kubeconfig_resource(self) -> str | None:
         self._ensure_directory_exists()
 
         if self.resource is not None:
             with open(self.resource, "r") as f:
                 return f.read()
+
+        return None
 
     def is_valid_kubeconfig_resource(self) -> bool:
         """Check if the kubeconfig resource is not an empty file."""
