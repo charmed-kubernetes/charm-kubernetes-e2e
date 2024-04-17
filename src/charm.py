@@ -29,8 +29,10 @@ logger = logging.getLogger(__name__)
 VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 KUBE_CONFIG_PATH = "/home/ubuntu/.kube/config"
 
+
 class KubeConfigResourceManager:
     """Manage the kubeconfig resource."""
+
     def __init__(self, model: ops.model.Model):
         self.kube_config_path = Path(KUBE_CONFIG_PATH)
         self.resource = model.resources.fetch("kubeconfig")
