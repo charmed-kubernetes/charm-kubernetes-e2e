@@ -11,8 +11,43 @@ The primary objectives of the e2e tests are to ensure a consistent and reliable
 behavior of the kubernetes code base, and to catch hard-to-test bugs before
 users do, when unit and integration tests are insufficient.
 
+## Usage with Canonical K8s
 
-## Usage
+This charm can be used to run tests on Canonical K8s.
+
+First, deploy k8s-operator and k8s-worker, and relate them.
+
+```
+juju deploy k8s
+juju deploy k8s-worker
+juju integrate k8s k8s-worker:cluster
+```
+
+Next, deploy the charm-kubernetes-e2e charm:
+
+```
+juju deploy kubernetes-e2e
+```
+
+Export the kubeconfig file of your Canonical K8s cluster:
+
+```
+juju run k8s/0 get-kubeconfig > kubeconfig
+```
+
+Attach the exported kubeconfig as a resource for the kubernetes-e2e charm:
+
+```
+juju attach-resource kubernetes-e2e kubeconfig=./kubeconfig
+```
+
+Finally, run the test action on the kubernetes-e2e charm and optionally specify a kubernetes context:
+
+```
+juju run kubernetes-e2e/0 test --wait 2h extra='-context k8s'
+```
+
+## Usage with Charmed Kubernetes
 
 To deploy the end-to-end test suite, it is best to deploy the
 [kubernetes-core bundle](https://github.com/juju-solutions/bundle-kubernetes-core)
