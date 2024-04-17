@@ -31,9 +31,9 @@ KUBE_CONFIG_PATH = "/home/ubuntu/.kube/config"
 
 class KubeConfigResourceManager:
     """Manage the kubeconfig resource."""
-    def __init__(self):
+    def __init__(self, model: ops.model.Model):
         self.kube_config_path = Path(KUBE_CONFIG_PATH)
-        self.resource = self.model.resources.fetch("kubeconfig")
+        self.resource = model.resources.fetch("kubeconfig")
 
     def _ensure_directory_exists(self):
         os.makedirs(self.kube_config_path.parent, exist_ok=True)
@@ -121,7 +121,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _setup_environment(self, event: EventBase) -> None:
-        kubeconfig_resource_manager = KubeConfigResourceManager()
+        kubeconfig_resource_manager = KubeConfigResourceManager(self.model)
 
         if kubeconfig_resource_manager.is_valid_kubeconfig_resource():
             kubeconfig_resource_manager.write_kubeconfig_resource()
