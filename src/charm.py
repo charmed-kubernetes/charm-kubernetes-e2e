@@ -38,7 +38,8 @@ class KubeConfigResourceManager:
 
         try:
             self.resource = model.resources.fetch("kubeconfig")
-        except NameError:
+        except (ops.ModelError, NameError):
+            log.warning("Error pulling an attached kubeconfig resource. Maybe nothing is attached")
             self.resource = None
 
     def _ensure_directory_exists(self) -> None:
