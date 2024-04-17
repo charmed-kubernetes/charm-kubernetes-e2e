@@ -44,7 +44,7 @@ class KubeConfigResourceManager:
     def _ensure_directory_exists(self) -> None:
         os.makedirs(self.kube_config_path.parent, exist_ok=True)
 
-    def _read_kubeconfig_resource(self) -> str | None:
+    def _read_kubeconfig_resource(self) -> Optional[str]:
         self._ensure_directory_exists()
 
         if self.resource is not None:
