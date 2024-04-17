@@ -38,7 +38,7 @@ juju deploy kubernetes-e2e
 Export the kubeconfig file of your Canonical K8s cluster:
 
 ```
-juju run k8s/0 get-kubeconfig > kubeconfig
+juju run k8s/0 get-kubeconfig | yq '.kubeconfig' -r > kubeconfig
 ```
 
 Attach the exported kubeconfig as a resource for the kubernetes-e2e charm:
