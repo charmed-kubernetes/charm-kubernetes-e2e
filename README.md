@@ -13,7 +13,12 @@ users do, when unit and integration tests are insufficient.
 
 ## Usage with Canonical K8s
 
-This charm can be used to run tests on Canonical K8s.
+> Note: This charm can be used to test both Canonical K8s and
+Charmed Kubernetes. The information for testing Charmed Kubernetes is
+in the next section.
+
+Running the end-to-end test suite on Canonical K8s requires integrating the
+`k8s-operator` and `k8s-worker` charms and deploying the `kubernetes-e2e` charm.
 
 First, deploy k8s-operator and k8s-worker, and relate them.
 
@@ -23,7 +28,7 @@ juju deploy k8s-worker
 juju integrate k8s k8s-worker:cluster
 ```
 
-Next, deploy the charm-kubernetes-e2e charm:
+Next, deploy the kubernetes-e2e charm:
 
 ```
 juju deploy kubernetes-e2e
@@ -49,9 +54,9 @@ juju run kubernetes-e2e/0 test --wait 2h extra='-context k8s'
 
 ## Usage with Charmed Kubernetes
 
-To deploy the end-to-end test suite, it is best to deploy the
+To test Charmed Kubernetes, we suggest deploying the
 [kubernetes-core bundle](https://github.com/juju-solutions/bundle-kubernetes-core)
-and then relate the `kubernetes-e2e` charm.
+and then relating the `kubernetes-e2e` charm.
 
 ```shell
 juju deploy kubernetes-core
@@ -60,7 +65,6 @@ juju integrate kubernetes-e2e:kube-control kubernetes-control-plane:kube-control
 juju integrate kubernetes-e2e easyrsa
 juju add-unit kubernetes-worker  # to test with 2 worker nodes
 ```
-
 
 Once the relations have settled, and the `kubernetes-e2e` charm reports
  `Ready to test.` - you may kick off an end to end validation test.
@@ -138,8 +142,7 @@ than this readme can encapsulate. There is far more information in the
 
 It is not enough to just simply run the test. Result output is stored in two
 places. The raw output of the e2e run is available in the `juju show-action-output`
-command, as well as a flat file on disk on the `kubernetes-e2e` unit that
-executed the test.
+command, as well as a flat file ending in ".log" on disk of the `kubernetes-e2e` unit that executed the test.
 
 > Note: The results will only be available once the action has
 completed the test run. End-to-end testing can be quite time intensive. Often
