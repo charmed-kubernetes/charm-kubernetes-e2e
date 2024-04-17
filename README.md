@@ -46,7 +46,15 @@ Attach the exported kubeconfig as a resource for the kubernetes-e2e charm:
 juju attach-resource kubernetes-e2e kubeconfig=./kubeconfig
 ```
 
-Finally, run the test action on the kubernetes-e2e charm and optionally specify a kubernetes context:
+When you attach the kubeconfig resource, the kubernetes-e2e charm places the kubeconfig at /home/ubuntu/.kube/config - this allows kubectl to communicate with your Canonical K8s cluster.
+
+# Running the e2e test
+
+Once the relations have settled, and the `kubernetes-e2e` charm reports
+ `Ready to test.` - you may kick off an end to end validation test.
+
+ Optionally, you can use the `extra` action parameter to specify a kubernetes
+ context to be used.
 
 ```
 juju run kubernetes-e2e/0 test --wait 2h extra='-context k8s'
