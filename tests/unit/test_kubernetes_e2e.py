@@ -1,4 +1,4 @@
-from charm import determine_arch
+from util import determine_arch
 import unittest.mock as mock
 
 
