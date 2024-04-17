@@ -38,8 +38,8 @@ class KubeConfigResourceManager:
 
         try:
             self.resource = model.resources.fetch("kubeconfig")
-        except (ops.ModelError, NameError):
-            log.warning("Error pulling an attached kubeconfig resource. Maybe nothing is attached")
+        except (ops.model.ModelError, NameError):
+            logger.warning("Error pulling an attached kubeconfig resource. Maybe nothing is attached.")
             self.resource = None
 
     def _ensure_directory_exists(self) -> None:
@@ -184,16 +184,21 @@ class KubernetesE2ECharm(ops.CharmBase):
         if not self._check_kube_config_exists(event):
             return
 
-        event.log(f"Running scripts/test.sh: {' '.join(command)}")
-
-        process = subprocess.run(command, capture_output=False, check=True)
+        logger.log(f"Running scripts/test.sh: {' '.join(command)}")
 
         self.unit.status = MaintenanceStatus("Tests running...")
 
+        process = subprocess.run(command, capture_output=False, check=True)
+
+        previous_status = self.unit.status
+
         if self._log_has_errors(event) or process.returncode != 0:
+            event.set_results({"result": "One or more tests failed."})
             sys.exit(process.returncode)
         else:
             event.set_results({"result": "Tests ran successfully."})
+
+        self.unit.status = previous_status
 
 
 if __name__ == "__main__":  # pragma: nocover

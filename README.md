@@ -150,8 +150,8 @@ than this readme can encapsulate. There is far more information in the
 ### Evaluating end-to-end results
 
 It is not enough to just simply run the test. Result output is stored in two
-places. The raw output of the e2e run is available in the `juju show-action-output`
-command, as well as a flat file ending in ".log" on disk of the `kubernetes-e2e` unit that executed the test.
+places. The output of the e2e run is available as a flat file ending in ".log" on disk of the `kubernetes-e2e` unit that executed the test. The output is also
+available through `juju show-task`.
 
 > Note: The results will only be available once the action has
 completed the test run. End-to-end testing can be quite time intensive. Often
@@ -166,7 +166,7 @@ Running operation 2 with 1 task
 
 Waiting for task 3...
 
-$ juju scp kubernetes-e2e/0:5.log .
+$ juju scp kubernetes-e2e/0:3.log .
 ```
 
 ##### Action result output
