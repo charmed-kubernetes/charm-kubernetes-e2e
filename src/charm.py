@@ -185,19 +185,19 @@ class KubernetesE2ECharm(ops.CharmBase):
 
         logger.info("Running scripts/test.sh: %s", "".join(command))
 
+        previous_status = self.unit.status
         self.unit.status = MaintenanceStatus("Tests running...")
 
         # Let check=False so the log and process return code can be checked below.
         process = subprocess.run(command, capture_output=False, check=False)
 
-        previous_status = self.unit.status
-
-        if self._log_has_errors(event) or process.returncode != 0:
-            event.fail("One or more tests failed.")
-        else:
-            event.set_results({"result": "Tests ran successfully."})
-
-        self.unit.status = previous_status
+        try:
+            if self._log_has_errors(event) or process.returncode != 0:
+                event.fail("One or more tests failed.")
+            else:
+                event.set_results({"result": "Tests ran successfully."})
+        finally:
+            self.unit.status = previous_status
 
 
 if __name__ == "__main__":  # pragma: nocover
