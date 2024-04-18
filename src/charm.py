@@ -6,8 +6,8 @@
 
 import logging
 import os
+import shlex
 import subprocess
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -29,12 +29,42 @@ VALID_LOG_LEVELS = ["info", "debug", "warning", "error", "critical"]
 KUBE_CONFIG_PATH = "/home/ubuntu/.kube/config"
 
 
-def determine_arch() -> str:
-    """Dpkg wrapper to surface the architecture we are tied to."""
-    cmd = ["dpkg", "--print-architecture"]
-    output = subprocess.check_output(cmd).decode("utf-8")
+class KubeConfigResourceManager:
+    """Manage the kubeconfig resource."""
 
-    return output.rstrip()
+    def __init__(self, model: ops.model.Model):
+        self.kube_config_path = Path(KUBE_CONFIG_PATH)
+
+        try:
+            self.resource = model.resources.fetch("kubeconfig")
+        except (ops.model.ModelError, NameError):
+            logger.warning(
+                "Error pulling an attached kubeconfig resource. Maybe nothing is attached."
+            )
+            self.resource = None
+
+    def _ensure_directory_exists(self) -> None:
+        os.makedirs(self.kube_config_path.parent, exist_ok=True)
+
+    def _read_kubeconfig_resource(self) -> Optional[str]:
+        self._ensure_directory_exists()
+
+        if self.resource is not None:
+            with open(self.resource, "r") as f:
+                return f.read()
+
+        return None
+
+    def is_valid_kubeconfig_resource(self) -> bool:
+        """Check if the kubeconfig resource is not an empty file."""
+        if not self._read_kubeconfig_resource():
+            return False
+        return True
+
+    def write_kubeconfig_resource(self) -> None:
+        """Write the kubeconfig resource to the expected location."""
+        if content := self._read_kubeconfig_resource():
+            self.kube_config_path.write_text(content)
 
 
 class KubernetesE2ECharm(ops.CharmBase):
@@ -100,11 +130,16 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _setup_environment(self, event: EventBase) -> None:
-        if not self._ensure_certificates_relation(event):
-            return
+        kubeconfig_resource_manager = KubeConfigResourceManager(self.model)
 
-        if not self._ensure_kube_control_relation(event):
-            return
+        if kubeconfig_resource_manager.is_valid_kubeconfig_resource():
+            kubeconfig_resource_manager.write_kubeconfig_resource()
+        else:
+            if not self._ensure_certificates_relation(event):
+                return
+
+            if not self._ensure_kube_control_relation(event):
+                return
 
         channel = self.config.get("channel")
         self._install_snaps(channel)
@@ -125,9 +160,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _log_has_errors(self, event: ActionEvent) -> bool:
-        action_uuid = os.getenv("JUJU_ACTION_UUID")
-
-        log_file_path = Path(f"/home/ubuntu/{action_uuid}.log")
+        log_file_path = Path(f"/home/ubuntu/{event.id}.log")
 
         if not log_file_path.exists():
             msg = f"Logfile not found at expected location {log_file_path}"
@@ -142,20 +175,29 @@ class KubernetesE2ECharm(ops.CharmBase):
             return str(event.params.get(p, ""))
 
         # Param order matters here because test.sh uses $1, $2, etc.
-        args = [param_get(param) for param in ["focus", "skip", "parallelism", "timeout", "extra"]]
+        args = [param_get(param) for param in ["focus", "skip", "parallelism", "timeout"]]
+        args += shlex.split(param_get("extra"))
+
         command = ["scripts/test.sh", *args]
 
         if not self._check_kube_config_exists(event):
             return
 
-        event.log(f"Running this command: {' '.join(command)}")
+        logger.info("Running scripts/test.sh: %s", "".join(command))
 
-        process = subprocess.run(command, capture_output=False, check=True)
+        previous_status = self.unit.status
+        self.unit.status = MaintenanceStatus("Tests running...")
 
-        if self._log_has_errors(event) or process.returncode != 0:
-            sys.exit(process.returncode)
-        else:
-            event.set_results({"result": "Tests ran successfully."})
+        # Let check=False so the log and process return code can be checked below.
+        process = subprocess.run(command, capture_output=False, check=False)
+
+        try:
+            if self._log_has_errors(event) or process.returncode != 0:
+                event.fail("One or more tests failed.")
+            else:
+                event.set_results({"result": "Tests ran successfully."})
+        finally:
+            self.unit.status = previous_status
 
 
 if __name__ == "__main__":  # pragma: nocover

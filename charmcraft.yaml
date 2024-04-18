@@ -27,3 +27,8 @@ parts:
   charm:
     build-packages: [git]
     prime: ["scripts/**"]
+resources:
+  kubeconfig:
+    type: file
+    filename: kubeconfig
+    description: The kubeconfig file for the cluster to be tested
