@@ -49,7 +49,7 @@ juju attach-resource kubernetes-e2e kubeconfig=./kubeconfig
 
 When you attach the kubeconfig resource, the kubernetes-e2e charm places the kubeconfig at /home/ubuntu/.kube/config - this allows kubectl to communicate with your Canonical K8s cluster.
 
-# Running the e2e test
+### Running the e2e test
 
 Once the relations have settled, and the `kubernetes-e2e` charm reports
  `Ready to test.` - you may kick off an end to end validation test.
@@ -87,9 +87,9 @@ end to end test. The defaults are sensible for most deployments.
 juju run kubernetes-e2e/0 test --wait=2h
 ```
 
-### Tuning the e2e test
+## Tuning the e2e test
 
-The e2e test is configurable. By default it will focus on or skip the declared
+The e2e test is configurable for both Canonical K8s and Charmed K8s testing. By default it will focus on or skip the declared
 conformance tests in a cloud agnostic way. Default behaviors are configurable.
 This allows the operator to test only a subset of the conformance tests, or to
 test more behaviors not enabled by default. You can see all tunable options on
