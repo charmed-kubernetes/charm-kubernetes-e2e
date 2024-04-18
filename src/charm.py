@@ -161,9 +161,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         return True
 
     def _log_has_errors(self, event: ActionEvent) -> bool:
-        action_uuid = os.getenv("JUJU_ACTION_UUID")
-
-        log_file_path = Path(f"/home/ubuntu/{action_uuid}.log")
+        log_file_path = Path(f"/home/ubuntu/{event.id}.log")
 
         if not log_file_path.exists():
             msg = f"Logfile not found at expected location {log_file_path}"
