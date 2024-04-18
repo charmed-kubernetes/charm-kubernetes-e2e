@@ -32,7 +32,7 @@ GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
   -ginkgo.focus $FOCUS \
   -ginkgo.skip "$SKIP" \
   ${EXTRA_ARGS[@]} \
-  -report-dir $ACTION_JUNIT 2>&1 | tee -a $ACTION_LOG \
+  -report-dir $ACTION_JUNIT 2>&1 | tee -a $ACTION_LOG
 
 # This appends the END TIMESTAMP to the e2e build log
 echo "JUJU_E2E_END=$(date -u +%s)" | tee -a $ACTION_LOG
