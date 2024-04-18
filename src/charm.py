@@ -6,9 +6,8 @@
 
 import logging
 import os
-import subprocess
-import sys
 import shlex
+import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -184,17 +183,17 @@ class KubernetesE2ECharm(ops.CharmBase):
         if not self._check_kube_config_exists(event):
             return
 
-        logger.log(f"Running scripts/test.sh: {' '.join(command)}")
+        logger.info("Running scripts/test.sh: %s", "".join(command))
 
         self.unit.status = MaintenanceStatus("Tests running...")
 
-        process = subprocess.run(command, capture_output=False, check=True)
+        # Let check=False so the log and process return code can be checked below.
+        process = subprocess.run(command, capture_output=False, check=False)
 
         previous_status = self.unit.status
 
         if self._log_has_errors(event) or process.returncode != 0:
-            event.set_results({"result": "One or more tests failed."})
-            sys.exit(process.returncode)
+            event.fail("One or more tests failed.")
         else:
             event.set_results({"result": "Tests ran successfully."})
 
