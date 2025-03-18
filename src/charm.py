@@ -13,13 +13,6 @@ from typing import Optional
 
 import ops
 from charms.operator_libs_linux.v2 import snap
-from ops import (
-    ActionEvent,
-    BlockedStatus,
-    EventBase,
-    MaintenanceStatus,
-    WaitingStatus,
-)
 from ops.interface_kube_control import KubeControlRequirer
 from ops.interface_tls_certificates import CertificatesRequires
 
@@ -74,7 +67,7 @@ class KubernetesE2ECharm(ops.CharmBase):
 
     def __init__(self, *args) -> None:
         super().__init__(*args)
-        self.kube_control = KubeControlRequirer(self)
+        self.kube_control = KubeControlRequirer(self, schemas="0,1")
         self.certificates = CertificatesRequires(self)
 
         self.CA_CERT_PATH.parent.mkdir(exist_ok=True)
@@ -92,23 +85,23 @@ class KubernetesE2ECharm(ops.CharmBase):
         self.framework.observe(self.on.test_action, self._on_test_action)
         self.framework.observe(self.on.config_changed, self._setup_environment)
 
-    def _kube_control_relation_joined(self, event: EventBase):
-        self.kube_control.set_auth_request(self.unit.name)
+    def _kube_control_relation_joined(self, event: ops.EventBase):
+        self.kube_control.set_auth_request(self.unit.name, "system:masters")
         return self._setup_environment(event)
 
-    def _ensure_kube_control_relation(self, event: EventBase) -> bool:
-        self.unit.status = MaintenanceStatus("Evaluating kubernetes authentication.")
+    def _ensure_kube_control_relation(self, event: ops.EventBase) -> bool:
+        self.unit.status = ops.MaintenanceStatus("Evaluating kubernetes authentication.")
         evaluation = self.kube_control.evaluate_relation(event)
         if evaluation:
             if "Waiting" in evaluation:
-                self.unit.status = WaitingStatus(evaluation)
+                self.unit.status = ops.WaitingStatus(evaluation)
             else:
-                self.unit.status = BlockedStatus(evaluation)
+                self.unit.status = ops.BlockedStatus(evaluation)
             return False
         if not self.kube_control.get_auth_credentials(self.unit.name):
-            self.unit.status = WaitingStatus("Waiting for kube-control: unit credentials.")
+            self.unit.status = ops.WaitingStatus("Waiting for kube-control: unit credentials.")
             return False
-        self.unit.status = MaintenanceStatus("Kubernetes authentication completed.")
+        self.unit.status = ops.MaintenanceStatus("Kubernetes authentication completed.")
         self.kube_control.create_kubeconfig(
             self.CA_CERT_PATH, "/root/.kube/config", "root", self.unit.name
         )
@@ -117,19 +110,23 @@ class KubernetesE2ECharm(ops.CharmBase):
         )
         return True
 
-    def _ensure_certificates_relation(self, event: EventBase) -> bool:
-        self.unit.status = MaintenanceStatus("Evaluating certificates.")
+    def _ensure_certificates_relation(self, event: ops.EventBase) -> bool:
+        if self.kube_control.get_ca_certificate():
+            logger.info("CA Certificate is available from kube-control.")
+            return True
+
+        self.unit.status = ops.MaintenanceStatus("Evaluating certificates.")
         evaluation = self.certificates.evaluate_relation(event)
         if evaluation:
             if "Waiting" in evaluation:
-                self.unit.status = WaitingStatus(evaluation)
+                self.unit.status = ops.WaitingStatus(evaluation)
             else:
-                self.unit.status = BlockedStatus(evaluation)
+                self.unit.status = ops.BlockedStatus(evaluation)
             return False
         self.CA_CERT_PATH.write_text(self.certificates.ca)
         return True
 
-    def _setup_environment(self, event: EventBase) -> None:
+    def _setup_environment(self, event: ops.EventBase) -> None:
         kubeconfig_resource_manager = KubeConfigResourceManager(self.model)
 
         if kubeconfig_resource_manager.is_valid_kubeconfig_resource():
@@ -141,7 +138,7 @@ class KubernetesE2ECharm(ops.CharmBase):
             if not self._ensure_kube_control_relation(event):
                 return
 
-        channel = self.config.get("channel")
+        channel = str(self.config.get("channel"))
         self._install_snaps(channel)
 
         self.unit.status = ops.ActiveStatus("Ready to test.")
@@ -152,14 +149,14 @@ class KubernetesE2ECharm(ops.CharmBase):
         snap.ensure("kubernetes-test", snap.SnapState.Latest.value, channel=channel, classic=True)
         self.unit.status = ops.MaintenanceStatus("Snaps installed successfully.")
 
-    def _check_kube_config_exists(self, event: ActionEvent) -> bool:
+    def _check_kube_config_exists(self, event: ops.ActionEvent) -> bool:
         if not Path(KUBE_CONFIG_PATH).exists():
             event.fail("Missing Kubernetes configuration. See logs for info.")
             event.log("Relate to the certificate authority and kubernetes-control-plane.")
             return False
         return True
 
-    def _log_has_errors(self, event: ActionEvent) -> bool:
+    def _log_has_errors(self, event: ops.ActionEvent) -> bool:
         log_file_path = Path(f"/home/ubuntu/{event.id}.log")
 
         if not log_file_path.exists():
@@ -170,7 +167,7 @@ class KubernetesE2ECharm(ops.CharmBase):
 
         return "Test Suite Failed" in log_file_path.read_text()
 
-    def _on_test_action(self, event: ActionEvent) -> None:
+    def _on_test_action(self, event: ops.ActionEvent) -> None:
         def param_get(p):
             return str(event.params.get(p, ""))
 
@@ -186,7 +183,7 @@ class KubernetesE2ECharm(ops.CharmBase):
         logger.info("Running scripts/test.sh: %s", "".join(command))
 
         previous_status = self.unit.status
-        self.unit.status = MaintenanceStatus("Tests running...")
+        self.unit.status = ops.MaintenanceStatus("Tests running...")
 
         # Let check=False so the log and process return code can be checked below.
         process = subprocess.run(command, capture_output=False, check=False)
