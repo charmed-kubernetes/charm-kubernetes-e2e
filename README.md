@@ -192,7 +192,7 @@ on the kubernetes-worker units.
 ## Contributing
 
 If you are interested in fixing issues, updating docs or helping with
-development of this charm, please see the [CONTIBUTING.md](./CONTRIBUTING.md) page.
+development of this charm, please see the [CONTRIBUTING.md](./CONTRIBUTING.md) page.
 
 ## Help resources:
 
