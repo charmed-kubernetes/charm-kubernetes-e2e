@@ -10,7 +10,7 @@ config:
   options:
     channel:
       type: string
-      default: "latest/edge"
+      default: "1.33/stable"
       description: |
         Snap channel from which to install the kubernetes-test snap.
 
