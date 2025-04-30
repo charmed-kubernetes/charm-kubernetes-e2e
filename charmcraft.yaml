@@ -1,10 +1,57 @@
 name: kubernetes-e2e
 type: charm
-title: 
+title:
 summary: Run e2e validation of a cluster's conformance
 description: |
   Deploy the Kubernetes e2e framework and validate the conformance of a deployed
   Kubernetes cluster.
+
+config:
+  options:
+    channel:
+      type: string
+      default: "latest/edge"
+      description: |
+        Snap channel from which to install the kubernetes-test snap.
+
+actions:
+  test:
+    description: "Execute an end to end test."
+    params:
+      focus:
+        default: "\\[Conformance\\]"
+        description: Run tests matching the focus regex pattern.
+        type: string
+      parallelism:
+        default: 25
+        description: The number of test nodes to run in parallel.
+        type: integer
+      skip:
+        default: "\\[Flaky\\]|\\[Serial\\]"
+        description: Skip tests matching the skip regex pattern.
+        type: string
+      timeout:
+        default: 30000
+        description: Timeout in nanoseconds
+        type: integer
+      extra:
+        default: ""
+        description: Extra arguments for kubernetes-e2e test suite
+        type: string
+
+resources:
+  kubeconfig:
+    type: file
+    filename: kubeconfig
+    description: The kubeconfig file for the cluster to be tested
+
+requires:
+  kube-control:
+    interface: kube-control
+    limit: 1
+  certificates:
+    interface: tls-certificates
+
 bases:
   - build-on:
     - name: ubuntu
@@ -17,18 +64,10 @@ bases:
     - name: ubuntu
       channel: "24.04"
       architectures: [amd64, arm64]
-requires:
-  kube-control:
-    interface: kube-control
-    limit: 1
-  certificates:
-    interface: tls-certificates
+
 parts:
   charm:
+    plugin: charm
+    source: .
     build-packages: [git]
     prime: ["scripts/**"]
-resources:
-  kubeconfig:
-    type: file
-    filename: kubeconfig
-    description: The kubeconfig file for the cluster to be tested
