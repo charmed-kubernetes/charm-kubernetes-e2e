@@ -22,7 +22,7 @@ Running the end-to-end test suite on Canonical K8s requires integrating the
 
 First, deploy k8s-operator and k8s-worker, and relate them.
 
-```
+```shell
 juju deploy k8s
 juju deploy k8s-worker
 juju expose k8s
@@ -31,34 +31,9 @@ juju integrate k8s k8s-worker:cluster
 
 Next, deploy the kubernetes-e2e charm:
 
-```
+```shell
 juju deploy kubernetes-e2e
-```
-
-Export the kubeconfig file of your Canonical K8s cluster:
-
-```
-juju run k8s/0 get-kubeconfig | yq '.kubeconfig' -r > kubeconfig
-```
-
-Attach the exported kubeconfig as a resource for the kubernetes-e2e charm:
-
-```
-juju attach-resource kubernetes-e2e kubeconfig=./kubeconfig
-```
-
-When you attach the kubeconfig resource, the kubernetes-e2e charm places the kubeconfig at /home/ubuntu/.kube/config - this allows kubectl to communicate with your Canonical K8s cluster.
-
-### Running the e2e test
-
-Once the relations have settled, and the `kubernetes-e2e` charm reports
- `Ready to test.` - you may kick off an end to end validation test.
-
- Optionally, you can use the `extra` action parameter to specify a kubernetes
- context to be used.
-
-```
-juju run kubernetes-e2e/0 test --wait 2h extra='-context k8s'
+juju integrate kubernetes-e2e:kube-control k8s:kube-control
 ```
 
 ## Usage with Charmed Kubernetes
