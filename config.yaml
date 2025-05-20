@@ -1,6 +1,0 @@
-options:
-  channel:
-    type: string
-    default: "latest/edge"
-    description: |
-      Snap channel from which to install the kubernetes-test snap.

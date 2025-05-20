@@ -13,7 +13,7 @@ jobs:
     name: Lint Unit
     uses: charmed-kubernetes/workflows/.github/workflows/lint-unit.yaml@main
     with:
-      python: "['3.8', '3.10', '3.12']"
+      python: "['3.10', '3.12']"
     needs:
       - call-inclusive-naming-check
 
@@ -66,7 +66,7 @@ jobs:
 
       - name: Upload debug artifacts
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-run-artifacts
           path: tmp

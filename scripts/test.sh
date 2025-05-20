@@ -38,7 +38,7 @@ GINKGO_ARGS="-nodes=$PARALLELISM" kubernetes-test.e2e \
 echo "JUJU_E2E_END=$(date -u +%s)" | tee -a $ACTION_LOG
 
 # set cwd to /home/ubuntu and tar the artifacts using a minimal directory
-# path. Extracing "home/ubuntu/1412341234/foobar.log is cumbersome in ci
+# path. Extracting "home/ubuntu/1412341234/foobar.log is cumbersome in ci
 cd $ACTION_HOME/${JUJU_ACTION_UUID}-junit
 tar -czf $ACTION_JUNIT_TGZ *
 cd ..
