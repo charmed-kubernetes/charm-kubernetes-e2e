@@ -1,0 +1,10 @@
+description: Overlay for attaching current charm
+applications:
+  kubernetes-e2e:
+    charm: {{ charm }}
+    channel: {{ channel | default("null", true) }}
+    constraints: "cores=2 mem=8G root-disk=16G"
+    num_units: 1
+relations:
+- - kubernetes-e2e:kube-control
+  - k8s:kube-control
