@@ -1,5 +1,8 @@
-name: Test Suite
-on: [pull_request]
+name: VSphere Integration Tests
+on:
+  pull_request:
+  schedule:
+  - cron: "0 1 * * 0"  # Run weekly at 1am on Sundays
 
 jobs:
   call-inclusive-naming-check:
@@ -7,7 +10,6 @@ jobs:
     uses: canonical/inclusive-naming/.github/workflows/woke.yaml@main
     with:
       fail-on-error: "true"
-
 
   lint-unit:
     name: Lint Unit
@@ -17,22 +19,52 @@ jobs:
     needs:
       - call-inclusive-naming-check
 
+  charm-source:
+    name: Kubernetes-E2E Source
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.charm.outputs.channel }}
+    steps:
+      - name: Pull-Request charm channel
+        id: charm
+        run: |
+          set -euo pipefail
+          CHANNEL=""
+          SCHEDULE="${{ github.event.schedule || '' }}"
+          if [ "${SCHEDULE}" = "0 1 * * 0" ]; then
+            CHANNEL="latest/edge"
+            echo "Using ${CHANNEL} channel for weekly schedule"
+          fi
+
+          if [ -z "${CHANNEL}" ]; then
+            echo "Using empty channel for pull request"
+          fi
+          echo "channel=${CHANNEL}" >> $GITHUB_OUTPUT
+
   integration-test:
     name: Integration test with VMWare
     runs-on: self-hosted
+    strategy:
+      max-parallel: 1
+      matrix:
+        distribution: [canonical-kubernetes, charmed-kubernetes]
     needs:
       - lint-unit
+      - charm-source
+    env:
+      # Set default values
+      EXTRA_ARGS: "--basetemp=/home/ubuntu/pytest --kubernetes-distribution=${{ matrix.distribution }}"
     timeout-minutes: 90
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Read charmcraft version file
         id: charmcraft
         run: echo "channel=$(cat .charmcraft-channel)" >> $GITHUB_OUTPUT
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
@@ -47,11 +79,13 @@ jobs:
           bootstrap-constraints: "arch=amd64 cores=2 mem=4G"
           bootstrap-options: "${{ secrets.JAMMY_BOOTSTRAP_OPTIONS }} --model-default datastore=vsanDatastore --model-default primary-network=VLAN_2763"
 
-      - name: Run integration test
-        run: tox -e integration -- --basetemp=/home/ubuntu/pytest
+      - if: ${{ needs.charm-source.outputs.channel }}
+        name: Test from kubernetes-e2e channel=${{ needs.charm-source.outputs.channel }}
+        run: |
+          echo "EXTRA_ARGS=${EXTRA_ARGS} --kubernetes-e2e-channel=${{needs.charm-source.outputs.channel}}" >> $GITHUB_ENV
 
-      - name: Run unit test
-        run: tox -e unit -- --basetemp=/home/ubuntu/pytest
+      - name: Run integration test
+        run: tox -e integration -- ${EXTRA_ARGS}
 
       - name: Setup Debug Artifact Collection
         if: ${{ failure() }}

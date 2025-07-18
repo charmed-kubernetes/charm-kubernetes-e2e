@@ -23,21 +23,37 @@ SKIP_TESTS = r"\[(Flaky|Slow|Conformance|Feature:.*)\]"
 
 
 @pytest.mark.abort_on_fail
-async def test_build_and_deploy(ops_test: OpsTest):
+async def test_build_and_deploy(
+    ops_test: OpsTest,
+    kubernetes_e2e_channel: str,
+    kubernetes_distribution: str,
+):
     """Build the kubernetes-e2e charm and deploy it.
 
     Assert on the unit status before any relations/configurations take place.
     """
-    logger.info("Build charm...")
-    charm = await ops_test.build_charm(".")
+    assert ops_test.model is not None, "Model is not set up."
+    if kubernetes_e2e_channel:
+        logger.info(f"Using kubernetes-e2e channel: {kubernetes_e2e_channel}")
+        charm = APP_NAME
+        channel = kubernetes_e2e_channel
+    else:
+        logger.info("Using local charm source.")
+        channel = None
+        charm = next(Path(".").glob(f"{APP_NAME}*.charm"), None)
+        if not charm:
+            logger.info(f"Building {APP_NAME} charm.")
+            charm = await ops_test.build_charm(".")
+        charm = charm.resolve() if charm else None
 
+    bundle_vars = {"charm": charm, "channel": channel}
     overlays = [
-        ops_test.Bundle("charmed-kubernetes", channel="edge"),
-        Path("tests/data/charm.yaml"),
+        ops_test.Bundle(kubernetes_distribution, channel="edge"),
+        Path(f"tests/data/{kubernetes_distribution}.yaml"),
     ]
 
     logger.info("Rendering overlays...")
-    bundle, *overlays = await ops_test.async_render_bundles(*overlays, charm=charm)
+    bundle, *overlays = await ops_test.async_render_bundles(*overlays, **bundle_vars)
 
     logger.info("Deploy charm...")
     model = ops_test.model_full_name
