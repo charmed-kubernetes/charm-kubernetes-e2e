@@ -1,4 +1,4 @@
 ops == 2.17.1
 ops.interface-kube-control == 0.2.0
-ops.interface_tls_certificates @ git+https://github.com/charmed-kubernetes/interface-tls-certificates.git@main#subdirectory=ops
+ops.interface_tls_certificates @ git+https://github.com/charmed-kubernetes/interface-tls-certificates.git@release_1.34#subdirectory=ops
 setuptools==79.0.1
