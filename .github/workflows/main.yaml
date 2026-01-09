@@ -97,6 +97,7 @@ jobs:
           juju status 2>&1 | tee tmp/juju-status.txt
           juju-crashdump -s -m controller -a debug-layer -a config -o tmp/
           mv juju-crashdump-* tmp/ | true
+          mv $HOME/.local/state/charmcraft/log
 
       - name: Upload debug artifacts
         if: ${{ failure() }}
