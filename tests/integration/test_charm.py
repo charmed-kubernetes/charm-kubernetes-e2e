@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 METADATA = yaml.safe_load(Path("./charmcraft.yaml").read_text())
 APP_NAME = METADATA["name"]
+CHARM_CHANNEL = METADATA["config"]["options"]["channel"]["default"]
 TEST_ACTION_NAME = "test"
 READY_MESSAGE = "Ready to test."
 # Allow e2e tests to run with up to 2 non-ready nodes
@@ -48,7 +49,7 @@ async def test_build_and_deploy(
 
     bundle_vars = {"charm": charm, "channel": channel}
     overlays = [
-        ops_test.Bundle(kubernetes_distribution, channel="edge"),
+        ops_test.Bundle(kubernetes_distribution, channel=CHARM_CHANNEL),
         Path(f"tests/data/{kubernetes_distribution}.yaml"),
     ]
 
