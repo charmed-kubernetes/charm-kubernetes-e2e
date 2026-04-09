@@ -23,3 +23,6 @@ skip = "lib"
 [tool.pyright]
 include = ["src/**.py"]
 
+
+[tool.bandit]
+exclude_dirs = [".tox", ".venv", "venv"]
